@@ -1,0 +1,56 @@
+name: Movwa CI (Build Check)
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  # 1. 백엔드(Django) 설정 검사
+  backend-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Check Django Config (문법/설정 검사)
+        env:
+          # 빌드 단계에서는 임시 키를 사용해도 됨 (배포 아님)
+          SECRET_KEY: "django-insecure-test-key-for-ci-build"
+        run: |
+          python manage.py check
+
+  # 2. 프론트엔드(Vue) 빌드 검사
+  frontend-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Test (화면 생성 검사)
+        run: npm run build
