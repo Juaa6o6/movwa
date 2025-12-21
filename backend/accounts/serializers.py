@@ -29,3 +29,13 @@ class CustomRegisterSerializer(RegisterSerializer):
         user.save()
         
         return user
+
+
+class CustomUserDetailsSerializer(UserDetailsSerializer):
+    class Meta(UserDetailsSerializer.Meta):
+        fields = (
+            'pk',
+            'email',
+            'username',
+            'nickname',
+        )
