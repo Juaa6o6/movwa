@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'corsheaders',
+    'drf_spectacular',
 
     # 3. Local Apps
     'accounts',
@@ -138,11 +139,12 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# ---------------------
 
-# 0. custom user model 사용
+# custom user model 사용
 AUTH_USER_MODEL = 'accounts.User'
 
-# 1. Django Rest Framework 설정
+# Django Rest Framework 설정
 REST_FRAMEWORK = {
     # 인증(Authentication): JWTAuthentication 사용
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -152,9 +154,11 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.AllowAny',
     ),
+    # Swagger
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
-# 2. dj-rest-auth 설정 (로그인/가입 로직)
+# dj-rest-auth 설정 (로그인/가입 로직)
 REST_AUTH = {
     'USE_JWT': True,
     'JWT_AUTH_COOKIE': 'movwa-access',
@@ -164,16 +168,16 @@ REST_AUTH = {
     'USER_DETAILS_SERIALIZER': 'accounts.serializers.CustomUserDetailsSerializer',
 }
 
-# 3. Allauth 설정 (필수)
+# Allauth 설정 (필수)
 SITE_ID = 1  # django.contrib.sites가 사용하는 사이트 식별자
 
-# 1. 로그인 방법: 이메일만 사용
+# 로그인 방법: 이메일만 사용
 ACCOUNT_LOGIN_METHODS = {'email'}
 
 # TODO: 이메일 인증 메일 보내기 (개발 중엔 none)
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 
-# 3. 회원가입 필드 설정 (최신 방식)
+# 회원가입 필드 설정 (최신 방식)
 # 비밀번호는 알아서 처리되므로 적지 않습니다.
 ACCOUNT_SIGNUP_FIELDS = [
     'email',    # 이메일 받음
@@ -181,17 +185,17 @@ ACCOUNT_SIGNUP_FIELDS = [
     # 'nickname', # 닉네임은 별도 Serializer에서 처리(실무 방법)하거나 여기서 추가
 ]
 
-# 4. 핸들/이메일 필수 여부
+# 핸들/이메일 필수 여부
 ACCOUNT_UNIQUE_EMAIL = True
 
-# 4. Simple JWT 설정 (토큰 유효기간 등)
+# Simple JWT 설정 (토큰 유효기간 등)
 from datetime import timedelta
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # 액세스 토큰 1시간
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),     # 리프레시 토큰 1일
 }
 
-# 5. CORS 설정 (프론트엔드 통신 허용)
+# CORS 설정 (프론트엔드 통신 허용)
 # TODO: 나중에 Vue 개발 서버 주소(예: localhost:5173)를 여기에 추가
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
@@ -202,7 +206,21 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8080",
 ]
 
-# 5. 경고 무시 설정
+# 경고 무시 설정
 # "이메일 로그인인데 왜 username 입력받냐" -> 경고(W001)
 # username을 '로그인 ID'가 아니라 '보여주기용 핸들'로 쓰기 때문 -> 경고 무시
 SILENCED_SYSTEM_CHECKS = ['account.W001']
+
+# Swagger 설정
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'MOVWA API',
+    'DESCRIPTION': 'Movwa 영화 추천 서비스 API 문서입니다.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # SWAGGER UI 설정
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True, # 새로고침 해도 인증 정보(토큰) 유지
+        'displayOperationId': True,   # 각 API의 고유 ID 표시
+    },
+}
