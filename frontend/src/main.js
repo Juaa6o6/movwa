@@ -1,12 +1,14 @@
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
+import "vuetify/styles"
+import "@mdi/font/css/materialdesignicons.css"
 
-import App from './App.vue'
-import router from './router'
+import { createApp } from "vue"
+import App from "./App.vue"
+import { createPinia } from "pinia"
+import router from "./router"
+import vuetify from "./plugins/vuetify"
 
-const app = createApp(App)
-
-app.use(createPinia())
-app.use(router)
-
-app.mount('#app')
+createApp(App)
+  .use(createPinia())
+  .use(router)
+  .use(vuetify)
+  .mount("#app")
