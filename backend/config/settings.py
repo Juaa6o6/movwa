@@ -161,6 +161,7 @@ REST_AUTH = {
     'JWT_AUTH_REFRESH_COOKIE': 'movwa-refresh',
     # [중요] 닉네임 처리용 Serializer 연결
     'REGISTER_SERIALIZER': 'accounts.serializers.CustomRegisterSerializer',
+    'USER_DETAILS_SERIALIZER': 'accounts.serializers.CustomUserDetailsSerializer',
 }
 
 # 3. Allauth 설정 (필수)
