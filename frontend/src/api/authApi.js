@@ -1,11 +1,15 @@
-import http from "@/api/http"
+import api from '@/api/http'
 
-// [U-02]
-export const authApi = {
+export default {
+  // [회원가입]
+  // Django: path('api/v1/auth/registration/', ...)
+  signup(payload) {
+    return api.post('/api/v1/auth/registration/', payload)
+  },
+
+  // [로그인]
+  // Django: path('api/v1/auth/', ...) 내부의 /login/
   login(payload) {
-    return http.post("/api/v1/users/login/", payload)
-  },
-  me() {
-    return http.get("/api/v1/users/me/")
-  },
+    return api.post('/api/v1/auth/login/', payload)
+  }
 }
