@@ -1,29 +1,32 @@
 <template>
-  <v-container v-if="movieStore.isLoading" class="fill-height justify-center">
+  <v-container v-if="movieStore.isLoading" class="fill-height justify-center bg-black">
     <v-progress-circular indeterminate size="64" color="primary"></v-progress-circular>
   </v-container>
 
-  <v-container fluid class="pa-0" v-else-if="movieStore.movie">
-    
-    <MovieHeroSection 
-      :movie="movieStore.movie"
-      :youtube-url="movieStore.youtubeUrl"
-    />
-
-    <v-container class="mt-8" style="max-width: 1200px;"> <v-row>
-        <v-col cols="12" md="8" lg="8">
+  <v-container fluid v-else-if="movieStore.movie" class="pa-0 fill-height bg-black">
+    <v-row no-gutters class="fill-height">
+      
+      <v-col cols="12" md="8" class="fill-height" style="overflow-y: auto; height: 100vh;">
+        <MovieHeroSection 
+          :movie="movieStore.movie"
+          :youtube-url="movieStore.youtubeUrl"
+        />
+        
+        <v-container class="pa-8 text-white">
           <MovieMainContent 
             :movie="movieStore.movie"
             :cast-list="movieStore.castList"
           />
-        </v-col>
+        </v-container>
+      </v-col>
 
-        <v-col cols="12" md="4" lg="4">
-          <MovieRightPanel :movie="movieStore.movie" />
-        </v-col>
-      </v-row>
-    </v-container>
+      <v-col cols="12" md="4" class="fill-height" style="border-left: 1px solid #333; height: 100vh;">
+        <MovieRightPanel 
+          :movie="movieStore.movie" 
+        />
+      </v-col>
 
+    </v-row>
   </v-container>
 </template>
 
@@ -34,8 +37,7 @@ import { useMovieStore } from '@/stores/movieStore';
 
 import MovieHeroSection from '@/components/movie/MovieHeroSection.vue';
 import MovieMainContent from '@/components/movie/MovieMainContent.vue';
-// ❗ 이름 변경 주의: MovieSideInfo -> MovieRightPanel
-import MovieRightPanel from '@/components/movie/MovieRightPanel.vue'; 
+import MovieRightPanel from '@/components/movie/MovieRightPanel.vue';
 
 const route = useRoute();
 const movieStore = useMovieStore();
