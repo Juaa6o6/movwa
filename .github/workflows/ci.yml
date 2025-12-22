@@ -31,6 +31,8 @@ jobs:
         env:
           # 빌드 단계에서는 임시 키를 사용해도 됨 (배포 아님)
           SECRET_KEY: "django-insecure-test-key-for-ci-build"
+          # 추가된 부분: GitHub Secrets에 저장된 TMDB API 키를 주입합니다.
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
         run: |
           python manage.py check
 
