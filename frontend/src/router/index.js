@@ -36,11 +36,10 @@ const router = createRouter({
     },
     {
       // 1. 주소 변경: 에러 났던 주소랑 똑같이 맞춤
-      path: '/home/movie/:id', 
+      path: '/movie/:id', 
       name: 'MovieDetail',
       component: MovieDetailView,
       props: true,
-      
       // 2. 메타 추가: 헤더도 나오고, 로그인 검사도 하게 설정
       meta: { layout: 'default', requiresAuth: true }, 
     },
