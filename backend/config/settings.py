@@ -10,10 +10,23 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import environ
+import os
 from pathlib import Path
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# 1. environ 초기화
+env = environ.Env(DEBUG=(bool, False))
+
+# 2. .env 파일 읽기
+# backend/.env 경로를 정확히 잡기 위해 BASE_DIR 사용
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+
+# 3. TMDB API KEY 로드
+TMDB_API_KEY = env('TMDB_API_KEY')
 
 
 # Quick-start development settings - unsuitable for production
