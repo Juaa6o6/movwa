@@ -5,6 +5,7 @@ import axios from 'axios'
 export const useMovieStore = defineStore('movie', () => {
   const movie = ref(null)
   const castList = ref([])
+  const crewList = ref([]) // ✨ 추가: 제작진 데이터를 담을 변수
   const youtubeUrl = ref(null)
   const isLoading = ref(false)
   
@@ -15,34 +16,35 @@ export const useMovieStore = defineStore('movie', () => {
     isLoading.value = true
     
     try {
-      // 1. 진짜 DB에 요청 보내기
-      // (주의: id는 DB에 저장된 그 긴 문자열이어야 함)
+      // 1. Django API에 상세 정보 요청
       const response = await axios.get(`${API_URL}/api/v1/movies/${id}/`)
       const data = response.data
 
-      // 2. 데이터 가공 (DB랑 프론트 입맛 맞추기)
+      // 2. 기본 데이터 가공
       movie.value = {
         ...data,
-        // ★ 중요: DB엔 파일명만 있으니 앞에 주소를 붙여줍니다.
+        // 배경 이미지가 파일명만 올 경우를 대비해 풀 경로 생성
         backdrop_path: data.backdrop_path 
           ? `https://image.tmdb.org/t/p/original${data.backdrop_path}` 
           : null,
-          
-        // ★ 중요: DB에 'reviews'가 아직 없다면 빈 배열로 처리 (에러 방지)
         reviews: data.reviews || [] 
       }
 
-      // 3. 출연진 데이터 처리 (credits 컬럼 파싱)
-      // DB에서 credits가 JSON 객체로 잘 넘어오면 data.credits.cast
-      // 만약 문자열로 넘어오면 JSON.parse(data.credits).cast 해야 함
-      if (data.credits && data.credits.cast) {
-        castList.value = data.credits.cast.slice(0, 10) // 최대 10명만
+      // 3. 출연진(Cast) 및 제작진(Crew) 파싱
+      if (data.credits) {
+        // 데이터가 문자열(JSON String)로 올 경우와 객체로 올 경우 모두 대응
+        const credits = typeof data.credits === 'string' ? JSON.parse(data.credits) : data.credits
+        
+        // 출연진 상위 10명만 저장
+        castList.value = credits.cast ? credits.cast.slice(0, 10) : []
+        // 전체 제작진 저장 (나중에 감독을 찾기 위함)
+        crewList.value = credits.crew || []
       } else {
         castList.value = []
+        crewList.value = []
       }
 
-      // 4. 유튜브 영상 처리
-      // DB에 youtube_key가 있다면 URL로 변환
+      // 4. 유튜브 영상 주소 처리
       if (data.youtube_key) {
         youtubeUrl.value = `https://www.youtube.com/embed/${data.youtube_key}`
       } else {
@@ -59,7 +61,8 @@ export const useMovieStore = defineStore('movie', () => {
 
   return { 
     movie, 
-    castList, 
+    castList,
+    crewList, // ✨ 반환값에 추가 필수
     youtubeUrl, 
     isLoading, 
     fetchMovieDetail 

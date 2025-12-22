@@ -1,5 +1,6 @@
 <template>
   <div class="d-flex flex-column fill-height bg-white text-black">
+    
     <v-tabs
       v-model="tab"
       color="black"
@@ -29,7 +30,8 @@
           >
             <div class="d-flex justify-space-between align-center mb-2">
               <div class="d-flex align-center">
-                <<v-avatar color="grey-lighten-2" size="24" class="mr-2"> <v-icon size="16" color="grey-darken-2">mdi-account</v-icon>
+                <v-avatar color="grey-lighten-2" size="24" class="mr-2"> 
+                  <v-icon size="16" color="grey-darken-2">mdi-account</v-icon>
                 </v-avatar>
                 <span class="font-weight-bold text-subtitle-2 text-black">{{ review.user }}</span>
               </div>
@@ -84,7 +86,7 @@ const tab = ref(1);
 </script>
 
 <style scoped>
-/* 3. 스크롤바 디자인: 밝은 회색으로 변경 */
+/* ✨ 스크롤바 디자인: 화이트 테마에 맞게 밝은 회색으로 변경 */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -92,7 +94,7 @@ const tab = ref(1);
   background: #f1f1f1; /* 트랙 밝게 */
 }
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1; /* 핸들 밝게 */
+  background: #c1c1c1; /* 핸들(잡는 부분) 밝은 회색 */
   border-radius: 3px;
 }
 </style>
