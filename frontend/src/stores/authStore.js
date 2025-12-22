@@ -2,7 +2,7 @@ import { defineStore } from "pinia"
 import authApi from "@/api/authApi"
 import router from "@/router"
 
-const USE_MOCK_LOGIN = true 
+const USE_MOCK_LOGIN = false 
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
@@ -23,35 +23,63 @@ export const useAuthStore = defineStore("auth", {
   }),
 
   actions: {
+    // src/stores/authStore.js 내부 actions의 login 부분
+
     async login(payload) {
       this.loading = true
       this.error = null
+      
+      // 👇 어떤 데이터를 보내는지 확인
+      console.log("🚀 [전송] 로그인 요청 데이터:", payload)
+
       try {
         if (USE_MOCK_LOGIN) {
-          await new Promise((r) => setTimeout(r, 500))
-          localStorage.setItem("accessToken", "temp-token")
-          localStorage.setItem("refreshToken", "temp-refresh")
-          this.user = { email: payload.email }
-          return { ok: true }
+           // ... (Mock 코드는 생략)
+           return { ok: true }
         }
 
         const res = await authApi.login(payload)
+        
+        // 👇 백엔드가 뭘 줬는지 확인 (이게 제일 중요함!)
+        console.log("🔥 [응답] 백엔드 응답 전체:", res)
+        console.log("📦 [데이터] res.data 내용:", res.data)
+
+        // 구조 분해 시도
         const { access, refresh, user } = res.data
+
+        // 토큰이 잘 왔는지 확인
+        if (!access) {
+            console.warn("⚠️ 경고: access 토큰이 응답에 없습니다! 백엔드 설정을 확인하세요.")
+            console.warn("현재 응답된 키 목록:", Object.keys(res.data))
+        }
 
         localStorage.setItem("accessToken", access)
         localStorage.setItem("refreshToken", refresh)
-        this.user = user
+        
+        // user 정보가 없으면 임시로 이메일이라도 채워넣기
+        this.user = user || { email: payload.email, username: '관리자' }
 
         return { ok: true }
+
       } catch (e) {
-        const msg = e?.response?.data?.detail || "Login failed"
+        // 👇 에러가 나면 여기에 자세히 찍힘
+        console.error("❌ [에러] 로그인 실패:", e)
+        
+        // 에러 응답이 있다면 그 내용을 보여줌
+        if (e.response) {
+            console.log("응답 상태 코드:", e.response.status)
+            console.log("응답 데이터:", e.response.data)
+        }
+
+        const msg = e?.response?.data?.detail || 
+                    e?.response?.data?.non_field_errors?.[0] || 
+                    "로그인 실패 (콘솔 확인 필요)"
         this.error = msg
         return { ok: false, message: msg }
       } finally {
         this.loading = false
       }
     },
-
     logout() {
       localStorage.removeItem("accessToken")
       localStorage.removeItem("refreshToken")
