@@ -3,8 +3,10 @@ from datetime import timedelta
 from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework import status
+
 from django.contrib.auth import get_user_model
 from .models import Movie, UserMovieLog
+from django.test import TestCase
 
 User = get_user_model()
 
@@ -133,3 +135,102 @@ class SpecBasedTodaysPickTestCase(APITestCase):
         self.assertEqual(response.data[0]['title'], "최신 영화")
         
         print("\n✅ [REC-09] 24시간 필터링 및 정렬 테스트 통과")
+
+
+class MovieInteractionSignalTest(TestCase):
+    def setUp(self):
+        # 1. 테스트를 위한 기초 데이터 생성 (유저, 영화)
+        self.user = User.objects.create_user(username='testuser', password='password')
+        self.movie = Movie.objects.create(
+            tmdb_id=12345,
+            title="테스트 영화",
+            original_title="Test Movie",
+            # 필요한 필수 필드가 더 있다면 여기에 추가하세요
+        )
+
+    def test_rate_existing_saved_movie(self):
+        """
+        시나리오 1: 이미 '보고싶어요(Saved)' 상태인 영화에 
+        나중에 평점을 매기면, Saved가 자동으로 False로 변해야 한다.
+        """
+        # Given: 유저가 영화를 찜해둠
+        log = UserMovieLog.objects.create(
+            user=self.user, 
+            movie=self.movie, 
+            is_saved=True, 
+            rating=None
+        )
+        self.assertTrue(log.is_saved)  # 저장 잘 됐는지 확인
+
+        # When: 평점 4.5점을 부여 (Update)
+        log.rating = 4.5
+        log.save() 
+
+        # Then: 다시 DB에서 불러왔을 때 is_saved가 꺼져있어야 함
+        log.refresh_from_db() # DB의 최신 값을 다시 가져옴 (필수!)
+        self.assertEqual(log.rating, 4.5)
+        self.assertFalse(log.is_saved, "평점을 매겼는데 is_saved가 꺼지지 않았습니다.")
+
+    def test_rate_existing_liked_movie(self):
+        """
+        시나리오 2: '좋아요(Liked)' 상태인 영화에
+        평점을 매기면, Liked가 자동으로 False로 변해야 한다.
+        """
+        # Given: 유저가 좋아요를 누름
+        log = UserMovieLog.objects.create(
+            user=self.user, 
+            movie=self.movie, 
+            is_liked=True, 
+            rating=None
+        )
+
+        # When: 평점 등록
+        log.rating = 3.0
+        log.save()
+
+        # Then: Liked 해제 확인
+        log.refresh_from_db()
+        self.assertFalse(log.is_liked, "평점을 매겼는데 is_liked가 꺼지지 않았습니다.")
+
+    def test_create_log_with_rating_immediately(self):
+        """
+        시나리오 3: 로그를 처음 생성할 때부터 평점과 찜을 동시에 넣으려 하면
+        (로직상 그럴 일은 적겠지만) 저장은 평점만 되고 찜은 꺼져야 한다.
+        """
+        # When: 생성 시점에 is_saved=True, rating=5.0을 동시에 줌
+        log = UserMovieLog.objects.create(
+            user=self.user,
+            movie=self.movie,
+            is_saved=True,  # 찜 시도
+            is_liked=True,  # 좋아요 시도
+            rating=5.0      # 평점
+        )
+
+        # Then: Signal에 의해 저장 직전에 False로 바뀌어 있어야 함
+        log.refresh_from_db()
+        self.assertFalse(log.is_saved)
+        self.assertFalse(log.is_liked)
+        self.assertEqual(log.rating, 5.0)
+
+    def test_undo_rating_does_not_restore_saved(self):
+        """
+        시나리오 4: 평점을 줬다가 취소(None)했을 때,
+        과거의 찜 상태(True)가 되살아나지 않고 둘 다 False(초기화) 상태여야 한다.
+        """
+        # 1. 찜 상태로 시작
+        log = UserMovieLog.objects.create(user=self.user, movie=self.movie, is_saved=True)
+        
+        # 2. 평점 부여 -> 찜 해제됨
+        log.rating = 4.0
+        log.save()
+        log.refresh_from_db()
+        self.assertFalse(log.is_saved) # 확인 사살
+
+        # 3. 평점 취소 (실수였다!)
+        log.rating = None
+        log.save()
+        
+        # 4. 결과 확인: 찜이 되살아나지 않고 깔끔한 상태여야 함
+        log.refresh_from_db()
+        self.assertIsNone(log.rating)
+        self.assertFalse(log.is_saved, "평점을 지웠는데 찜이 되살아났습니다(의도치 않은 동작).")
