@@ -26,7 +26,7 @@ class MovieListView(APIView):
     permission_classes = [AllowAny] # 인증 없이 누구나 조회 가능
 
     @extend_schema(
-        tags=["Movies"],
+        tags=['Movies'],
         summary="영화 목록 조회",
         description="전체 영화 목록을 조회합니다. 페이지네이션이 적용되어 있습니다.",
         parameters=[
@@ -85,6 +85,7 @@ class MovieLikeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
+        tags=['Movies'],
         summary="영화 좋아요/싫어요 등록",
         description="is_liked: true(좋아요), false(싫어요), null(평가취소)",
         request=MovieLikeSerializer,
@@ -106,6 +107,7 @@ class MovieSaveView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
+        tags=['Movies'],
         summary="나중에 볼 영화(보고싶어요)",
         description="is_saved: true(찜하기), false(찜 해제)",
         request=MovieSaveSerializer,
@@ -126,6 +128,7 @@ class MovieRateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
+        tags=['Movies'],
         summary="영화 평점 등록/수정",
         description="0.5 ~ 5.0 사이의 평점을 0.5 단위로 입력합니다.",
         request=MovieRateSerializer,
@@ -141,6 +144,7 @@ class MovieRateView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
+        tags=['Movies'],
         summary="영화 평점 삭제",
         description="DB에서 로그를 삭제하는 것이 아니라 rating 필드만 null로 초기화합니다.",
         responses={204: None}
@@ -165,6 +169,7 @@ class MySaveListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
+        tags=['Movies'],
         summary="내가 찜한 영화 목록 조회",
         description="현재 로그인한 유저가 찜(is_saved=True)한 영화 목록을 최근 순으로 조회합니다.",
         responses=MovieListSerializer(many=True)
@@ -189,6 +194,7 @@ class MyRatedListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
+        tags=['Movies'],
         summary="내가 평가한 영화 목록 조회",
         description="현재 로그인한 유저가 평점을 남긴 영화 목록을 최근 순으로 조회합니다.",
         responses=MovieListSerializer(many=True)
@@ -211,6 +217,7 @@ class TodaysPickListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
+        tags=['Movies'],
         summary="오늘의 픽 (24시간 내 좋아요한 영화)",
         description="[REC-09] 사용자가 최근 24시간 이내에 '좋아요(is_liked=True)'를 누른 영화 목록을 최신순으로 반환합니다.",
         responses=MovieListSerializer(many=True)
