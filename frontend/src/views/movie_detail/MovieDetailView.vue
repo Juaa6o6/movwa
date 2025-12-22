@@ -98,10 +98,18 @@
         </v-col>
 
       <v-col cols="12" md="4" class="fill-height bg-grey-lighten-5" style="border-left: 1px solid #e0e0e0; height: calc(100vh - 80px);">
-        <MovieRightPanel :movie="movieStore.movie" />
+        <MovieRightPanel 
+          :movie="movieStore.movie" 
+          @open-review-dialog="showReviewDialog = true"
+        />
       </v-col>
 
     </v-row>
+
+    <MovieReviewDialog 
+      v-model:show="showReviewDialog"
+      @submit="handleReviewSubmit"
+    />
   </v-container>
 </template>
 
@@ -113,6 +121,7 @@ import { useMovieStore } from '@/stores/movieStore';
 import MovieHeroSection from '@/components/movie/MovieHeroSection.vue';
 import MovieMainContent from '@/components/movie/MovieMainContent.vue';
 import MovieRightPanel from '@/components/movie/MovieRightPanel.vue';
+import MovieReviewDialog from '@/components/movie/MovieReviewDialog.vue'; // ✨ 추가
 
 const route = useRoute();
 const movieStore = useMovieStore();
@@ -120,6 +129,14 @@ const movieStore = useMovieStore();
 // ✨ 추가된 상태 변수들
 const isLiked = ref(false);
 const isSaved = ref(false);
+const showReviewDialog = ref(false); // ✨ 팝업 상태 추가
+
+// [리뷰 등록 처리 함수 추가]
+const handleReviewSubmit = (reviewData) => {
+  console.log('등록할 리뷰:', reviewData);
+  // 여기에 Django 백엔드 API 서버로 POST 요청을 보내는 코드가 들어갑니다.
+  alert('리뷰가 등록되었습니다!');
+};
 
 // ✨ 유튜브 URL 자동재생 처리 (computed로 해결)
 const finalYoutubeUrl = computed(() => {
