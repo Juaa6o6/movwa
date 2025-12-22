@@ -1,8 +1,39 @@
 from django.urls import path
-from .views import MovieListView, MovieDetailView
+from .views import (
+    # 기존 조회 View
+    MovieListView,
+    MovieDetailView,
+    
+    # 상호작용(Action) View
+    MovieLikeView,
+    MovieSaveView,
+    MovieRateView,
+    
+    # 마이페이지/목록 조회 View
+    MySaveListView,
+    MyRatedListView,
+    TodaysPickListView
+)
 
+app_name = 'movies'
 
 urlpatterns = [
+
+    # 1. 영화 정보 조회 (Public/General)
     path('', MovieListView.as_view(), name='movie-list'),
     path('<uuid:pk>/', MovieDetailView.as_view(), name='movie-detail'),
+
+
+    # 2. 영화 상호작용 (Actions)
+    # URL 구조: /movies/{id}/{action}/
+    path('<uuid:pk>/like/', MovieLikeView.as_view(), name='movie-like'),
+    path('<uuid:pk>/save/', MovieSaveView.as_view(), name='movie-save'),
+    path('<uuid:pk>/rate/', MovieRateView.as_view(), name='movie-rate'),
+
+
+    # 3. 사용자 개인화 목록 (My Lists)
+    # URL 구조: /movies/my/{list_type}/
+    path('my/saved/', MySaveListView.as_view(), name='my-saved-list'),
+    path('my/rated/', MyRatedListView.as_view(), name='my-rated-list'),
+    path('my/todays-pick/', TodaysPickListView.as_view(), name='todays-pick'),
 ]
