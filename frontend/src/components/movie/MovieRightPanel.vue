@@ -15,7 +15,15 @@
     <v-window v-model="tab" class="flex-grow-1" style="overflow-y: auto;">
       
       <v-window-item :value="1" class="pa-4">
-        <v-btn block color="primary" class="mb-4" size="large" variant="flat" elevation="0">
+        <v-btn 
+          block 
+          color="primary" 
+          class="mb-4" 
+          size="large" 
+          variant="flat" 
+          elevation="0"
+          @click="$emit('open-review-dialog')" 
+        >
           <v-icon start>mdi-pencil</v-icon>
           리뷰 남기기
         </v-btn>
@@ -77,6 +85,9 @@
 
 <script setup>
 import { ref } from 'vue';
+
+// ✨ 부모 컴포넌트로 보낼 이벤트 정의
+defineEmits(['open-review-dialog']);
 
 defineProps({
   movie: Object
