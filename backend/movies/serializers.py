@@ -22,3 +22,16 @@ class MovieListSerializer(serializers.ModelSerializer):
             'genres',             # 장르 목록 (예: ['Action', 'Comedy'])
             'runtime',            # [추가] 상영 시간 (분 단위, 예: 120)
         ]
+
+
+class MovieDetailSerializer(serializers.ModelSerializer):
+    # 장르: ID 대신 ["Action", "Romance"] 형태로 변환
+    genres = serializers.SlugRelatedField(
+        many=True,
+        read_only=True,
+        slug_field='name'
+    )
+
+    class Meta:
+        model = Movie
+        fields = '__all__'      # 모든 필드 포함 (줄거리, 크레딧, 예고편 등 포함)

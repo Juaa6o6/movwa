@@ -5,15 +5,17 @@ from rest_framework.permissions import AllowAny
 from rest_framework.pagination import PageNumberPagination
 
 from drf_spectacular.utils import extend_schema, OpenApiParameter
+from django.shortcuts import get_object_or_404
 
 from .models import Movie
-from .serializers import MovieListSerializer
+from .serializers import MovieListSerializer, MovieDetailSerializer
 
 # 페이지네이션 설정 (기본 10개씩)
 class MoviePagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
 
+# 영화 목록 조회
 class MovieListView(APIView):
     permission_classes = [AllowAny] # 인증 없이 누구나 조회 가능
 
@@ -41,3 +43,24 @@ class MovieListView(APIView):
         
         # 4. 응답 반환
         return paginator.get_paginated_response(serializer.data)
+
+# 영화 상세 정보 조회
+class MovieDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        tags=['Movies'],
+        summary="영화 상세 조회",
+        description="영화의 상세 정보를 조회합니다. (줄거리, 출연진, 예고편 등)",
+        responses={200: MovieDetailSerializer}
+    )
+    
+    def get(self, request, pk):
+
+        # DB에서 영화 찾기 (없으면 404 에러 자동 발생)
+        movie = get_object_or_404(Movie, pk=pk)
+
+        # 직렬화 (상세 정보 전용 Serializer 사용)
+        serializer = MovieDetailSerializer(movie)
+
+        return Response(serializer.data)
