@@ -5,6 +5,7 @@ import LandingView from '@/views/auth/LandingView.vue'
 import LoginView from '@/views/auth/LoginView.vue'
 import SignupView from '@/views/auth/SignupView.vue'
 import HomeView from '@/views/home/HomeView.vue'
+import MovieDetailView from '@/views/movie_detail/MovieDetailView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -33,6 +34,12 @@ const router = createRouter({
       component: HomeView,
       meta: { layout: 'default', requiresAuth: true },
     },
+    {
+    path: '/movies/:id', // :id는 동적 파라미터
+    name: 'MovieDetail',
+    component: MovieDetailView,
+    props: true, // 파라미터를 props로 전달 가능하게 설정
+  },
   ],
 })
 
