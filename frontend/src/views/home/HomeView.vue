@@ -13,6 +13,7 @@
         @next="home.next"
         @save="home.saveCurrentMovie"
         @toggle-mute="home.toggleMute"
+        @click-hero="goToDetail"
       >
         <MovieActions
           :status="home.currentMovie?.status"
@@ -22,8 +23,7 @@
         />
       </HomeHero>
 
-      <div class="mt-8 mb-4 px-4">
-         <h3 class="text-h6 font-weight-bold text-black mb-3">추천 영화 목록</h3>
+      <div class="deck-wrapper">
          <RecommendationDeck
            :movies="home.recList"
            :currentIndex="home.currentIndex"
@@ -44,6 +44,7 @@
 
 <script setup>
 import { onMounted } from "vue";
+import { useRouter } from "vue-router";
 import { useHomeStore } from "@/stores/homeStore";
 
 import HomeHero from "@/components/home/HomeHero.vue";
@@ -52,23 +53,37 @@ import MovieActions from "@/components/movie/MovieActions.vue";
 import TodaysPick from "@/components/home/TodaysPick.vue";
 
 const home = useHomeStore();
+const router = useRouter();
 
 onMounted(() => {
   home.initHome();
 });
+
+// 히어로 클릭 시 상세 페이지 이동
+const goToDetail = () => {
+  if (home.currentMovie?.id) {
+    router.push(`/movie/${home.currentMovie.id}`);
+  }
+};
 </script>
 
 <style scoped>
 .home-view-bg {
-  background-color: #ffffff; /* 배경을 흰색으로 변경 */
+  background-color: #ffffff;
   min-height: 100vh;
   padding-bottom: 60px;
-  color: #000000; /* 기본 텍스트 색상 검은색으로 */
+  color: #000000;
 }
 
 .main-content-wrapper {
-  max-width: 1280px;
-  margin: 0 auto;
-  /* padding-top을 제거하여 Hero가 상단에 딱 붙게 함 */
+  max-width: 1280px; /* 전체 최대 너비 */
+  margin: 0 auto;    /* 중앙 정렬 */
+  padding-bottom: 20px;
+}
+
+/* 덱(Deck) 영역 스타일 */
+.deck-wrapper {
+  /* Hero와 너비를 맞추기 위해 별도 패딩 없음 (RecommendationDeck 내부에서 처리) */
+  margin-top: 10px; /* Hero와 살짝 띄우기 (완전히 붙이고 싶으면 0으로) */
 }
 </style>

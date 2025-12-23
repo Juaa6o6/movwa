@@ -5,8 +5,23 @@
     </router-link>
 
     <div class="ml-10 d-flex gap-4">
-      <v-btn to="/home" variant="text"color="black" class="text-subtitle-1 font-weight-bold">영화</v-btn>
-      <v-btn to="/library" variant="text" color="grey-lighten-1" class="text-subtitle-1">보관함</v-btn>
+      <v-btn 
+        to="/movies" 
+        variant="text" 
+        :color="isActive('/movies') ? 'black' : 'grey-lighten-1'"
+        :class="['text-subtitle-1', isActive('/movies') ? 'font-weight-bold' : '']"
+      >
+        영화
+      </v-btn>
+      
+      <v-btn 
+        to="/library" 
+        variant="text" 
+        :color="isActive('/library') ? 'black' : 'grey-lighten-1'"
+        :class="['text-subtitle-1', isActive('/library') ? 'font-weight-bold' : '']"
+      >
+        보관함
+      </v-btn>
     </div>
 
     <v-spacer></v-spacer>
@@ -36,8 +51,8 @@
       <v-card>
         <v-card-text>
           <div class="mx-auto text-center">
-            <h3>{{ user?.username || '사용자' }}</h3>
-            <p class="text-caption mt-1">{{ user?.email }}</p>
+            <h3>{{ authStore.user?.username || '사용자' }}</h3>
+            <p class="text-caption mt-1">{{ authStore.user?.email }}</p>
             <v-divider class="my-3"></v-divider>
             <v-btn rounded variant="text" block @click="handleLogout">로그아웃</v-btn>
           </div>
@@ -49,19 +64,23 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useRouter } from 'vue-router'; // 1. 라우터 가져오기
-import { useAuthStore } from '@/stores/authStore'; // authStore 경로 확인
+import { useRouter, useRoute } from 'vue-router'; // 1. useRoute 추가!
+import { useAuthStore } from '@/stores/authStore';
 
 const authStore = useAuthStore();
-const router = useRouter(); // 2. 라우터 사용 설정
+const router = useRouter();
+const route = useRoute(); // 2. 현재 주소 정보를 담은 변수
 const searchQuery = ref('');
-const user = authStore.user;
 
-// 3. 로그아웃 함수 만들기
+// 3. 현재 주소가 path와 일치하는지 확인하는 함수
+// 예: 현재 주소가 /movies라면 isActive('/movies')는 true가 됨
+const isActive = (path) => {
+  return route.path.startsWith(path);
+};
+
 const handleLogout = () => {
-  authStore.logout();      // 스토어에서 토큰 삭제
-  router.push('/login');   // 로그인 페이지로 이동
-  // window.location.reload(); // (혹시 화면 갱신 안 되면 주석 풀고 사용)
+  authStore.logout();
+  router.push('/login');
 };
 </script>
 
