@@ -1,97 +1,111 @@
 <template>
-  <v-card variant="flat" class="fill-height bg-transparent">
+  <div class="d-flex flex-column fill-height bg-white text-black">
+    
     <v-tabs
       v-model="tab"
-      color="primary"
+      color="black"
       align-tabs="center"
-      class="mb-4"
+      bg-color="grey-lighten-4"
+      class="border-b"
     >
-      <v-tab :value="1">리뷰</v-tab>
-      <v-tab :value="2">추천 영화</v-tab>
+      <v-tab :value="1" class="text-body-1 font-weight-bold">리뷰</v-tab>
+      <v-tab :value="2" class="text-body-1 font-weight-bold">추천 콘텐츠</v-tab>
     </v-tabs>
 
-    <v-window v-model="tab">
-      <v-window-item :value="1">
+    <v-window v-model="tab" class="flex-grow-1" style="overflow-y: auto;">
+      
+      <v-window-item :value="1" class="pa-4">
         <v-btn 
           block 
-          color="grey-darken-3" 
-          class="mb-4 py-6"
+          color="primary" 
+          class="mb-4" 
+          size="large" 
+          variant="flat" 
           elevation="0"
+          @click="$emit('open-review-dialog')" 
         >
-          리뷰 작성하기
+          <v-icon start>mdi-pencil</v-icon>
+          리뷰 남기기
         </v-btn>
 
-        <div class="d-flex align-center justify-space-between mb-4 px-2">
-          <span class="text-h6 font-weight-bold">평균 별점</span>
-          <div class="text-yellow-darken-2">
-            <v-icon icon="mdi-star"></v-icon>
-            <span class="text-h6 font-weight-bold ml-1">{{ movie.vote_average }}</span>
-          </div>
-        </div>
-
-        <v-list lines="two" bg-color="transparent">
-          <v-list-item
+        <div v-if="movie?.reviews?.length > 0">
+          <v-card
             v-for="review in movie.reviews"
             :key="review.id"
-            class="mb-3 rounded-lg bg-grey-lighten-4"
-            elevation="0"
+            color="white" 
+            class="mb-3 pa-3 border"
+            variant="flat"
           >
-            <template v-slot:prepend>
-              <v-avatar color="grey-darken-1" size="32">
-                <v-icon icon="mdi-account" color="white" size="20"></v-icon>
-              </v-avatar>
-            </template>
-
-            <v-list-item-title class="font-weight-bold text-body-2 mb-1">
-              {{ review.user }}
-              <span class="text-caption text-grey ml-2">{{ review.date }}</span>
-            </v-list-item-title>
-            
-            <div class="d-flex align-center mb-1">
+            <div class="d-flex justify-space-between align-center mb-2">
+              <div class="d-flex align-center">
+                <v-avatar color="grey-lighten-2" size="24" class="mr-2"> 
+                  <v-icon size="16" color="grey-darken-2">mdi-account</v-icon>
+                </v-avatar>
+                <span class="font-weight-bold text-subtitle-2 text-black">{{ review.user }}</span>
+              </div>
               <v-rating
                 :model-value="review.rating"
-                color="yellow-darken-3"
+                color="amber"
                 density="compact"
-                size="small"
+                size="x-small"
                 readonly
                 half-increments
               ></v-rating>
             </div>
+            <p class="text-body-2 text-grey-darken-3">{{ review.content }}</p>
+            <div class="text-caption text-grey mt-1 text-right">{{ review.date }}</div>
+          </v-card>
+        </div>
 
-            <p class="text-body-2 text-grey-darken-3">
-              {{ review.content }}
-            </p>
-          </v-list-item>
-        </v-list>
+        <div v-else class="text-center py-10 text-grey">
+          <v-icon size="40" class="mb-2 text-grey-lighten-1">mdi-comment-outline</v-icon>
+          <p>아직 작성된 리뷰가 없습니다.<br>첫 번째 리뷰를 남겨보세요!</p>
+        </div>
       </v-window-item>
 
-      <v-window-item :value="2">
+      <v-window-item :value="2" class="pa-4">
         <v-row dense>
           <v-col cols="6" v-for="n in 6" :key="n">
-            <v-card height="150" color="grey-lighten-2" class="d-flex align-center justify-center">
-              <span class="text-caption text-grey">추천 영화 {{ n }}</span>
+            <v-card 
+              height="200" 
+              color="grey-lighten-4" 
+              class="d-flex align-center justify-center position-relative border"
+              hover
+              flat
+            >
+              <span class="text-caption text-grey">이미지 없음</span>
             </v-card>
           </v-col>
         </v-row>
       </v-window-item>
+
     </v-window>
-  </v-card>
+  </div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 
+// ✨ 부모 컴포넌트로 보낼 이벤트 정의
+defineEmits(['open-review-dialog']);
+
 defineProps({
   movie: Object
 });
 
-const tab = ref(1); // 기본값 1 (리뷰 탭)
+const tab = ref(1);
 </script>
 
 <style scoped>
-/* 스크롤바 커스텀 (선택사항) */
-.v-list {
-  max-height: 600px;
-  overflow-y: auto;
+/* ✨ 스크롤바 디자인: 화이트 테마에 맞게 밝은 회색으로 변경 */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1; /* 트랙 밝게 */
+}
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1; /* 핸들(잡는 부분) 밝은 회색 */
+  border-radius: 3px;
 }
 </style>

@@ -7,12 +7,13 @@
       title="YouTube video player"
       frameborder="0" allowfullscreen
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      style="z-index: 1;"
     ></iframe>
     
     <v-img
       v-else
       :src="movie.backdrop_path"
-      cover height="100%" class="opacity-60"
+      cover height="100%"
     >
       <template v-slot:placeholder>
         <div class="d-flex align-center justify-center fill-height">
@@ -21,22 +22,7 @@
       </template>
     </v-img>
 
-    <div class="position-absolute bottom-0 left-0 w-100 pa-6 bg-gradient-to-t">
-      <h1 class="text-h3 font-weight-bold text-white mb-2">
-        {{ movie.title }}
-        <span class="text-h5 text-grey-lighten-1">({{ getYear(movie.release_date) }})</span>
-      </h1>
-      
-      <div class="d-flex align-center gap-4">
-        <v-chip color="yellow-darken-2" variant="flat" class="mr-2">
-          ⭐ {{ movie.vote_average?.toFixed(1) }}
-        </v-chip>
-        <v-chip v-for="genre in movie.genres" :key="genre.id" variant="outlined" class="mr-1 text-white">
-          {{ genre.name }}
-        </v-chip>
-      </div>
-    </div>
-  </v-sheet>
+    </v-sheet>
 </template>
 
 <script setup>
@@ -44,15 +30,8 @@ defineProps({
   movie: Object,
   youtubeUrl: String
 });
-
-const getYear = (dateString) => {
-  if (!dateString) return '';
-  return dateString.split('-')[0];
-};
 </script>
 
 <style scoped>
-.bg-gradient-to-t {
-  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
-}
+/* 그라데이션 스타일도 더 이상 필요 없어서 삭제했습니다. */
 </style>
