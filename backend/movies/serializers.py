@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Movie, Genre
+from .models import Movie, Genre, UserMovieLog
 
 
 class MovieListSerializer(serializers.ModelSerializer):
@@ -35,3 +35,38 @@ class MovieDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Movie
         fields = '__all__'      # 모든 필드 포함 (줄거리, 크레딧, 예고편 등 포함)
+
+# Like/Pass (Action)
+class MovieLikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserMovieLog
+        fields = ['is_liked']
+
+# 나중에 볼 영화(SAVE)
+class MovieSaveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserMovieLog
+        fields = ['is_saved']
+
+# 평점 등록/수정 (Rate)
+class MovieRateSerializer(serializers.ModelSerializer):
+    rating = serializers.FloatField(min_value=0.5, max_value=5.0)
+
+    class Meta:
+        model = UserMovieLog
+        fields = ['rating']
+
+    # 0.5 단위 검증 로직
+    def validate_rating(self, value):
+        # 2를 곱했을 때 정수가 아니면 0.5 단위가 아님 (예: 4.3 -> 8.6)
+        if (value * 2) % 1 != 0:
+            raise serializers.ValidationError("평점은 0.5 단위로 입력해야 합니다.")
+        return value
+
+# 공통 Response용 (필요 시 전체 로그 반환)
+class UserMovieLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserMovieLog
+        fields = ['id', 'user', 'movie', 'is_liked', 'is_saved', 'rating', 'updated_at', 'created_at']
+        read_only_fields = ['user', 'movie']
+        
