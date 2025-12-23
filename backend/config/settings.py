@@ -240,3 +240,11 @@ SPECTACULAR_SETTINGS = {
         'displayOperationId': True,   # 각 API의 고유 ID 표시
     },
 }
+
+# [Static files] (CSS, JS, 로고 등 개발자가 만든 파일)
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # 프로덕션용 (python manage.py collectstatic)
+
+# [Media files] (프로필 이미지 등 사용자가 업로드한 파일)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
