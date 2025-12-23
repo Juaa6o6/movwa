@@ -39,8 +39,8 @@ jobs:
           python manage.py check
           
           echo "2. 테스트 코드 실행 (Test)"
-          # movies 앱의 테스트만 빠르게 실행
           python manage.py test movies
+          python manage.py test reviews
           
           # (선택 사항) 전체 테스트를 돌리고 싶다면 아래 주석 해제
           # python manage.py test
