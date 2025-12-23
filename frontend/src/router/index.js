@@ -5,6 +5,7 @@ import LandingView from '@/views/auth/LandingView.vue'
 import LoginView from '@/views/auth/LoginView.vue'
 import SignupView from '@/views/auth/SignupView.vue'
 import HomeView from '@/views/home/HomeView.vue'
+import MovieDetailView from '@/views/movie_detail/MovieDetailView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -32,6 +33,15 @@ const router = createRouter({
       name: 'HomeView',
       component: HomeView,
       meta: { layout: 'default', requiresAuth: true },
+    },
+    {
+      // 1. 주소 변경: 에러 났던 주소랑 똑같이 맞춤
+      path: '/movie/:id', 
+      name: 'MovieDetail',
+      component: MovieDetailView,
+      props: true,
+      // 2. 메타 추가: 헤더도 나오고, 로그인 검사도 하게 설정
+      meta: { layout: 'default', requiresAuth: true }, 
     },
   ],
 })
