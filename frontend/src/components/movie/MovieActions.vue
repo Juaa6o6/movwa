@@ -1,110 +1,96 @@
 <template>
-  <div class="actions">
+  <div class="actions d-flex align-center gap-3">
+    
     <v-btn 
-      class="pill-btn" 
-      variant="outlined" 
-      color="grey-lighten-3" 
-      prepend-icon="mdi-close"
+      rounded="pill" 
+      :variant="status === 'passed' ? 'flat' : 'outlined'"
+      :color="status === 'passed' ? 'grey-darken-3' : 'white'"
+      class="action-btn"
       @click="$emit('pass')"
     >
+      <v-icon start>mdi-close</v-icon>
       PASS
     </v-btn>
 
-    <v-menu v-model="menuOpen" :close-on-content-click="false" location="top center">
+    <v-menu 
+        v-model="menuOpen" 
+        :close-on-content-click="false" 
+        location="top center" 
+        offset="10"
+    >
       <template #activator="{ props }">
         <v-btn 
-          class="pill-btn" 
-          variant="outlined" 
-          color="white" 
-          prepend-icon="mdi-star-outline"
+          rounded="pill" 
+          :variant="status === 'rated' ? 'flat' : 'outlined'"
+          :color="status === 'rated' ? 'yellow-accent-4' : 'white'"
+          :class="['action-btn', {'text-black': status === 'rated'}]"
           v-bind="props"
         >
-          RATE
+          <v-icon start>{{ status === 'rated' ? 'mdi-star' : 'mdi-star-outline' }}</v-icon>
+          {{ status === 'rated' ? 'RATED' : 'RATE' }}
         </v-btn>
       </template>
 
-      <v-card class="pa-4 rounded-xl elevation-10" width="280" color="grey-darken-4">
-        <div class="d-flex justify-space-between align-center mb-2">
-          <span class="text-subtitle-2 font-weight-bold text-white">이 영화 평가하기</span>
-          <span class="text-h6 text-yellow-accent-4 font-weight-bold">{{ localRating }}</span>
-        </div>
-        
-        <div class="d-flex justify-center my-2">
+      <v-card class="pa-4 rounded-xl elevation-10 bg-grey-darken-4" min-width="240">
+        <div class="text-center mb-2 font-weight-bold text-white">별점을 선택하세요</div>
+        <div class="d-flex justify-center">
           <v-rating 
-            v-model="localRating" 
+            v-model="ratingValue"
             color="yellow-accent-4" 
             active-color="yellow-accent-4"
             half-increments 
             hover 
-            length="5" 
-            size="x-large"
-            density="compact"
+            size="large"
+            @update:model-value="onRate" 
           />
         </div>
-
-        <v-btn 
-          class="mt-3 font-weight-bold" 
-          block 
-          color="yellow-accent-4" 
-          variant="flat"
-          rounded="pill"
-          @click="emitRate"
-        >
-          등록 완료
-        </v-btn>
       </v-card>
     </v-menu>
 
     <v-btn 
-      class="pill-btn" 
-      variant="flat" 
-      color="red-accent-2" 
-      prepend-icon="mdi-heart"
+      rounded="pill" 
+      :variant="status === 'liked' ? 'flat' : 'outlined'"
+      :color="status === 'liked' ? 'red-accent-2' : 'white'"
+      class="action-btn"
       @click="$emit('like')"
     >
+      <v-icon start>{{ status === 'liked' ? 'mdi-heart' : 'mdi-heart-outline' }}</v-icon>
       LIKE
     </v-btn>
-    
-    <v-btn 
-      icon="mdi-bookmark-outline" 
-      variant="text" 
-      color="white" 
-      density="comfortable"
-      @click="$emit('save')"
-    >
-    </v-btn>
+
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 
-const emit = defineEmits(["pass", "rate", "like", "save"]);
+const props = defineProps({
+    // 부모로부터 현재 영화의 상태를 받음 (liked, passed, rated, null)
+    status: { type: String, default: null } 
+});
 
-const localRating = ref(3.5); // 기본값 3.5 정도가 적당
-const menuOpen = ref(false); // 메뉴 닫기 제어용
+const emit = defineEmits(["pass", "rate", "like"]);
 
-const emitRate = () => {
-  emit("rate", localRating.value);
-  menuOpen.value = false; // 확인 누르면 메뉴 닫기
+const menuOpen = ref(false);
+const ratingValue = ref(0);
+
+// 별점 클릭 시 자동 동작 (확인 버튼 없음)
+const onRate = (value) => {
+    emit('rate', value); // 즉시 부모에게 알림
+    menuOpen.value = false; // 메뉴 닫기
+    ratingValue.value = 0; // 초기화 (옵션)
 };
 </script>
 
 <style scoped>
-.actions {
-  /* position: absolute;  <-- 제거함! 부모(Hero)가 위치를 잡아줍니다. */
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+.gap-3 { gap: 16px; }
 
-.pill-btn {
-  border-radius: 999px;
-  min-width: 90px; /* 너비 조금 확보 */
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: none; /* 대문자 강제 변환 해제 (선택사항) */
-  border-width: 2px; /* 외곽선 두께 */
-  backdrop-filter: blur(4px); /* 배경 살짝 흐리게 해서 가독성 확보 */
+.action-btn {
+  border-width: 2px !important;
+  height: 48px;
+  font-weight: 800;
+  padding: 0 28px;
+  font-size: 1rem;
+  backdrop-filter: blur(4px);
 }
 </style>

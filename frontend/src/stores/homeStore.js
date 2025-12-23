@@ -1,101 +1,124 @@
 // src/stores/homeStore.js
-import { defineStore } from "pinia";
-import movieApi from "@/api/moviesApi";
+import { defineStore } from 'pinia';
+import { ref, computed } from 'vue';
+import movieApi from '@/api/moviesApi';
 
+export const useHomeStore = defineStore('home', () => {
+  const recList = ref([]);
+  const todaysPicks = ref([]);
+  const currentIndex = ref(0);
+  const isLoading = ref(false);
+  const isMuted = ref(true);
 
-const shuffleList = (list) => {
-  const arr = [...list];
-  for (let i = arr.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-};
+  const currentMovie = computed(() => {
+    return recList.value[currentIndex.value] || null;
+  });
 
-export const useHomeStore = defineStore("home", {
-  state: () => ({
-    recList: [],
-    currentIndex: 0,
-    isLoading: false,
-  }),
+  const initHome = async () => {
+    isLoading.value = true;
+    try {
+      const res = await movieApi.getRecommendations(10);
+      recList.value = Array.isArray(res.data) ? res.data : (res.data.results || []);
+      // 초기 status는 null
+      recList.value = recList.value.map(m => ({ ...m, status: null }));
+      currentIndex.value = 0;
+    } catch (e) {
+      console.error(e);
+    } finally {
+      isLoading.value = false;
+    }
+  };
 
-  getters: {
-    currentMovie(state) {
-      return state.recList[state.currentIndex] || null;
-    },
-  },
+  const selectIndex = (index) => currentIndex.value = index;
 
-  actions: {
-    // REC-01, REC-02
-    async initHome() {
-      this.isLoading = true;
-      try {
-        const res = await movieApi.getRecommendations(10);
-        // 백엔드 응답 형태에 따라 둘 중 하나
-        const list = Array.isArray(res.data)
-          ? res.data
-          : res.data.results || [];
-        this.recList = shuffleList(list);
-        this.currentIndex = 0;
-      } catch (e) {
-        console.error("홈 추천 영화 로딩 실패", e);
-      } finally {
-        this.isLoading = false;
-      }
-    },
+  const next = () => {
+    if (!recList.value.length) return;
+    currentIndex.value = (currentIndex.value + 1) % recList.value.length;
+  };
 
-    // 썸네일 클릭
-    selectIndex(index) {
-      this.currentIndex = index;
-    },
+  const prev = () => {
+    if (!recList.value.length) return;
+    currentIndex.value = (currentIndex.value - 1 + recList.value.length) % recList.value.length;
+  };
 
-    // 좌/우 이동
-    next() {
-      if (!this.recList.length) return;
-      this.currentIndex =
-        (this.currentIndex + 1) % this.recList.length;
-    },
+  // === 액션 로직 (상호 배타적) ===
 
-    prev() {
-      if (!this.recList.length) return;
-      this.currentIndex =
-        (this.currentIndex - 1 + this.recList.length) %
-        this.recList.length;
-    },
+  // 1. PASS
+  const passCurrentMovie = async () => {
+    if (!currentMovie.value) return;
+    // 상태 교체: pass
+    currentMovie.value.status = 'passed';
+    
+    // 오늘의 픽에 있다면 제거
+    removeFromPicks(currentMovie.value.id);
+    
+    // PASS는 다음 영화로 넘김
+    setTimeout(() => next(), 300);
+  };
 
-    // REC-04 PASS
-    async passCurrentMovie() {
-      const movie = this.currentMovie;
-      if (!movie) return;
+  // 2. LIKE
+  const likeCurrentMovie = async () => {
+    if (!currentMovie.value) return;
+    
+    // 토글 로직: 이미 liked면 취소, 아니면 liked로 변경
+    const isAlready = currentMovie.value.status === 'liked';
+    currentMovie.value.status = isAlready ? null : 'liked';
 
-      await movieApi.passMovie(movie.id);
-      this.next();
-    },
+    if (!isAlready) {
+        addToPicks(currentMovie.value);
+    } else {
+        removeFromPicks(currentMovie.value.id);
+    }
+    
+    // LIKE는 다음 영화로 넘김 (취향에 따라 제거 가능)
+    // setTimeout(() => next(), 300); 
+  };
 
-    // REC-05 LIKE
-    async likeCurrentMovie() {
-      const movie = this.currentMovie;
-      if (!movie) return;
+  // 3. RATE (스크롤 제거됨)
+  const rateCurrentMovie = async (rating) => {
+    if (!currentMovie.value) return;
+    
+    // 상태 교체: rated
+    currentMovie.value.status = 'rated';
+    currentMovie.value.rating = rating;
+    
+    // 오늘의 픽에서는 제거 (평가함으로 이동한다고 가정)
+    removeFromPicks(currentMovie.value.id);
 
-      await movieApi.likeMovie(movie.id, true);
-      this.next();
-    },
+    console.log(`Rate: ${rating}점 저장 -> 상태 변경됨`);
+    // ❗ 여기있던 next()를 제거했습니다. (가로 스크롤 안 함)
+  };
 
-    // REC-06 RATE
-    async rateCurrentMovie(rating) {
-      const movie = this.currentMovie;
-      if (!movie) return;
+  // 4. SAVE (상호 배타적 적용)
+  const saveCurrentMovie = async () => {
+    if (!currentMovie.value) return;
+    
+    // 토글 로직
+    const isAlready = currentMovie.value.status === 'saved';
+    currentMovie.value.status = isAlready ? null : 'saved';
+    
+    // 저장된 영화는 오늘의 픽에서는 제외(성격이 다르므로)하거나 유지
+    removeFromPicks(currentMovie.value.id);
+  };
 
-      await movieApi.rateMovie(movie.id, rating);
-      this.next();
-    },
+  // 5. MUTE
+  const toggleMute = () => {
+    isMuted.value = !isMuted.value;
+  };
 
-    // REC-07 SAVE
-    async saveCurrentMovie() {
-      const movie = this.currentMovie;
-      if (!movie) return;
+  // 유틸리티
+  const addToPicks = (movie) => {
+    if (!todaysPicks.value.find(m => m.id === movie.id)) {
+        todaysPicks.value.unshift(movie);
+    }
+  };
+  const removeFromPicks = (movieId) => {
+    todaysPicks.value = todaysPicks.value.filter(m => m.id !== movieId);
+  };
 
-      await movieApi.saveMovie(movie.id);
-    },
-  },
+  return {
+    recList, todaysPicks, currentIndex, isLoading, currentMovie, isMuted,
+    initHome, selectIndex, next, prev,
+    passCurrentMovie, likeCurrentMovie, rateCurrentMovie, saveCurrentMovie, toggleMute
+  };
 });
