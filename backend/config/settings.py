@@ -231,6 +231,7 @@ SPECTACULAR_SETTINGS = {
     'TITLE': 'MOVWA API',
     'DESCRIPTION': 'Movwa 영화 추천 서비스 API 문서입니다.',
     'VERSION': '1.0.0',
+    'SCHEMA_PATH_PREFIX': '/api/v1/',
     'SERVE_INCLUDE_SCHEMA': False,
     # SWAGGER UI 설정
     'SWAGGER_UI_SETTINGS': {
