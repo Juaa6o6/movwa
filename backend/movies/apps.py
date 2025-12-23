@@ -5,4 +5,4 @@ class MoviesConfig(AppConfig):
     name = 'movies'  # 기존 설정 유지 (settings.py의 INSTALLED_APPS에 적힌 이름과 같아야 함)
 
     def ready(self):
-        import reviews.signals
+        import movies.signals
