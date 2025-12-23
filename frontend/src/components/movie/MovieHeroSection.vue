@@ -1,5 +1,5 @@
 <template>
-  <v-sheet color="black" height="500" class="d-flex align-center justify-center position-relative">
+  <v-sheet color="black" class="movie-hero d-flex align-center justify-center position-relative">
     <iframe
       v-if="youtubeUrl"
       width="100%" height="100%"
@@ -7,13 +7,15 @@
       title="YouTube video player"
       frameborder="0" allowfullscreen
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      class="movie-hero__media movie-hero__media--video"
       style="z-index: 1;"
     ></iframe>
     
     <v-img
       v-else
       :src="movie.backdrop_path"
-      cover height="100%"
+      class="movie-hero__media movie-hero__media--image"
+      contain height="100%"
     >
       <template v-slot:placeholder>
         <div class="d-flex align-center justify-center fill-height">
@@ -33,5 +35,21 @@ defineProps({
 </script>
 
 <style scoped>
-/* 그라데이션 스타일도 더 이상 필요 없어서 삭제했습니다. */
+.movie-hero {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  overflow: hidden;
+  position: relative;
+}
+
+.movie-hero__media {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.movie-hero__media--video {
+  position: static;
+}
 </style>

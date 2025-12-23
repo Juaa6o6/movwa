@@ -73,7 +73,7 @@
             :crew-list="movieStore.crewList" 
           />
         </v-container>
-
+<!-- //나중에 관련영상 수정하기*/ -->
         <v-container class="pa-6" v-if="relatedVideos.length > 0">
           <h3 class="text-h5 font-weight-bold mb-4">관련 영상</h3>
           <v-row>
