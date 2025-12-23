@@ -1,72 +1,87 @@
 <template>
-  <v-container class="mt-8">
-    <h3 class="text-h5 font-weight-bold text-white mb-4">오늘의 픽 영화</h3>
-    
-    <v-row>
-      <v-col 
-        v-for="movie in movies" 
-        :key="movie.id"
-        cols="6" sm="4" md="2"
+  <div v-if="movies.length === 0" class="text-center text-grey py-10">
+    아직 '좋아요'한 영화가 없습니다.
+  </div>
+
+  <v-row v-else dense>
+    <v-col
+      v-for="movie in movies"
+      :key="movie.id"
+      cols="6"
+      sm="4"
+      md="2"
+      lg="2"
+    >
+      <v-card
+        class="movie-card rounded-0 cursor-pointer"
+        flat
+        @click="goToDetail(movie.id)"
       >
-        <v-card 
-          color="teal-accent-3" 
-          height="200" 
-          class="d-flex align-center justify-center rounded-lg elevation-4 cursor-pointer movie-card"
-          @click="$router.push(`/movie/${movie.id}`)"
+        <v-img
+          :src="posterUrl(movie)"
+          aspect-ratio="2/3"
+          cover
+          class="bg-grey-darken-4"
         >
-          <v-img 
-            v-if="movie.poster_path" 
-            :src="`https://image.tmdb.org/t/p/w342${movie.poster_path}`" 
-            cover 
-            height="100%" 
-            width="100%"
-            class="rounded-lg"
-          >
-            <template v-slot:placeholder>
-              <div class="d-flex align-center justify-center fill-height bg-grey-darken-3">
-                <v-progress-circular indeterminate color="teal-accent-3"></v-progress-circular>
-              </div>
-            </template>
-          </v-img>
+          <template v-slot:placeholder>
+            <div class="d-flex align-center justify-center fill-height">
+              <v-progress-circular indeterminate color="grey-lighten-4" />
+            </div>
+          </template>
           
-          <span v-else class="text-white font-weight-bold px-2 text-center">
-            {{ movie.title }}
-          </span>
-        </v-card>
-      </v-col>
-      
-      <v-col v-if="!movies || movies.length === 0" cols="12">
-        <div class="empty-box d-flex flex-column align-center justify-center text-grey">
-          <v-icon size="48" class="mb-2 opacity-50">mdi-heart-off-outline</v-icon>
-          <p>아직 '좋아요'한 영화가 없습니다.</p>
-          <p class="text-caption">마음에 드는 영화에 LIKE를 눌러보세요!</p>
-        </div>
-      </v-col>
-    </v-row>
-  </v-container>
+          <div class="hover-overlay d-flex align-end pa-2">
+              <span class="text-white text-caption font-weight-bold text-truncate">
+                  {{ movie.title }}
+              </span>
+          </div>
+        </v-img>
+      </v-card>
+    </v-col>
+  </v-row>
 </template>
 
 <script setup>
-// Props 정의
-const props = defineProps({
-  movies: {
-    type: Array,
-    // ✨ 핵심: 데이터가 안 넘어왔을 때를 대비해 빈 배열을 기본값으로 설정
-    default: () => [] 
-  }
+import { useRouter } from 'vue-router';
+
+defineProps({
+  movies: { type: Array, default: () => [] },
 });
+
+const router = useRouter();
+
+const posterUrl = (m) => {
+  if (!m?.poster_path) return "https://via.placeholder.com/300x450?text=No+Poster";
+  // 해상도를 조금 높임 (w500)
+  return `https://image.tmdb.org/t/p/w500${m.poster_path}`;
+};
+
+const goToDetail = (id) => {
+  router.push(`/movie/${id}`);
+};
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .movie-card {
-  transition: transform 0.2s;
+  transition: transform 0.2s ease-in-out;
+  position: relative;
+  
+  /* 호버 효과 */
+  &:hover {
+    transform: scale(1.03);
+    z-index: 2;
+    
+    .hover-overlay {
+        opacity: 1;
+    }
+  }
 }
-.movie-card:hover {
-  transform: translateY(-5px);
-}
-.empty-box {
-  min-height: 200px;
-  border: 2px dashed rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+
+/* 기본적으로 오버레이 숨김 */
+.hover-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 50%);
+    opacity: 0;
+    transition: opacity 0.2s;
 }
 </style>
