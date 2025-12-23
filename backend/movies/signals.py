@@ -1,5 +1,6 @@
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
+from django.apps import apps
 from .models import UserMovieLog
 
 @receiver(pre_save, sender=UserMovieLog)
