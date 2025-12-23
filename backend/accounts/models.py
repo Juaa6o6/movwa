@@ -172,8 +172,8 @@ class Profile(models.Model):
     )
 
     class Meta:
-        verbose_name = '프로필'
-        verbose_name_plural = '프로필'
+        verbose_name = 'Profile'
+        verbose_name_plural = 'Profiles'
 
     def __str__(self):
         return f"{self.user.username}'s Profile"
@@ -222,8 +222,8 @@ class Follow(models.Model):
         ]
         # 최신 팔로우가 먼저 나오도록
         ordering = ['-created_at']
-        verbose_name = '팔로우'
-        verbose_name_plural = '팔로우'
+        verbose_name = 'Follow'
+        verbose_name_plural = 'Follows'
 
     def clean(self):
         if self.follower == self.following:
