@@ -9,7 +9,7 @@
         to="/movies" 
         variant="text" 
         :color="isActive('/movies') ? 'black' : 'grey-lighten-1'"
-        :class="['text-subtitle-1', isActive('/movies') ? 'font-weight-bold' : '']"
+        :class="['nav-btn', 'text-subtitle-1', isActive('/movies') ? 'font-weight-bold' : '']"
       >
         영화
       </v-btn>
@@ -18,7 +18,7 @@
         to="/library" 
         variant="text" 
         :color="isActive('/library') ? 'black' : 'grey-lighten-1'"
-        :class="['text-subtitle-1', isActive('/library') ? 'font-weight-bold' : '']"
+        :class="['nav-btn', 'text-subtitle-1', isActive('/library') ? 'font-weight-bold' : '']"
       >
         보관함
       </v-btn>
@@ -87,4 +87,11 @@ const handleLogout = () => {
 <style scoped>
 .gap-4 { gap: 16px; }
 a { text-decoration: none; }
+.nav-btn { background-color: transparent !important; }
+.nav-btn.v-btn--active { background-color: transparent !important; }
+.nav-btn:hover { background-color: transparent !important; }
+.nav-btn:focus-visible { background-color: transparent !important; }
+:deep(.nav-btn .v-btn__overlay) { opacity: 0 !important; }
+:deep(.nav-btn .v-btn__underlay) { opacity: 0 !important; }
+:deep(.nav-btn .v-ripple__container) { opacity: 0 !important; }
 </style>
