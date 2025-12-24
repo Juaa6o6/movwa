@@ -30,6 +30,7 @@ urlpatterns = [
     #  accounts 앱의 커스텀 기능 연결 - '프로필 조회', '정보 수정' 등은 이쪽으로 보냅니다.
     path('api/v1/accounts/', include('accounts.urls')),
     path('api/v1/movies/', include('movies.urls')),
+    path('api/v1/reviews/', include('reviews.urls')),
     
     # 1. 스키마 다운로드 (YAML 파일)
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
