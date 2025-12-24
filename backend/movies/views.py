@@ -1,5 +1,6 @@
 from django.utils import timezone
 from datetime import timedelta
+from django.db.models import Q, Case, When, IntegerField
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -242,3 +243,83 @@ class TodaysPickListView(APIView):
         serializer = MovieListSerializer(movies, many=True)
         
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# 영화 검색
+class MovieSearchView(APIView):
+    permission_classes = [AllowAny]
+    
+    @extend_schema(
+        tags=['movies'],
+        summary="영화 검색",
+        description="제목, 원제, 장르를 통합 검색합니다. q 파라미터에 검색어를 입력하세요.",
+        parameters=[
+            OpenApiParameter(
+                name='q',
+                description='검색어 (제목, 원제, 장르 검색)',
+                required=True,
+                type=str
+            ),
+            OpenApiParameter(
+                name='sort',
+                description='정렬 기준 (popularity: 인기도순[기본], relevance: 관련도순, latest: 최신순)',
+                required=False,
+                type=str
+            ),
+            OpenApiParameter(
+                name='page',
+                description='페이지 번호',
+                required=False,
+                type=int
+            ),
+        ],
+        responses={200: MovieListSerializer(many=True)}
+    )
+    def get(self, request):
+        # 1. 검색어 가져오기
+        search_query = request.query_params.get('q', '').strip()
+        
+        if not search_query:
+            return Response(
+                {"error": "검색어(q)를 입력해주세요."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 2. 검색 실행 (제목 OR 원제 OR 장르)
+        movies = Movie.objects.filter(
+            Q(title__icontains=search_query) |
+            Q(original_title__icontains=search_query) |
+            Q(genres__name__icontains=search_query)
+        ).prefetch_related('genres').distinct()
+        
+        # 3. 정렬 옵션 처리
+        sort_option = request.query_params.get('sort', 'popularity')
+        
+        if sort_option == 'relevance':
+            # 관련도순: 제목 정확일치 > 제목 시작 > 제목 포함 > 원제 포함 > 장르 일치
+            movies = movies.annotate(
+                relevance=Case(
+                    When(title__iexact=search_query, then=4),  # 제목 정확 일치
+                    When(title__istartswith=search_query, then=3),  # 제목 시작
+                    When(title__icontains=search_query, then=2),  # 제목 포함
+                    When(original_title__icontains=search_query, then=1),  # 원제 포함
+                    default=0,  # 장르만 일치
+                    output_field=IntegerField()
+                )
+            ).order_by('-relevance', '-popularity')
+        elif sort_option == 'latest':
+            # 최신순
+            movies = movies.order_by('-release_date')
+        else:
+            # 인기도순 (기본값)
+            movies = movies.order_by('-popularity')
+        
+        # 4. 페이지네이션
+        paginator = MoviePagination()
+        paginated_movies = paginator.paginate_queryset(movies, request)
+        
+        # 5. 직렬화
+        serializer = MovieListSerializer(paginated_movies, many=True)
+        
+        # 6. 응답 반환
+        return paginator.get_paginated_response(serializer.data)
