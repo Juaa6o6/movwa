@@ -3,17 +3,14 @@
     아직 '좋아요'한 영화가 없습니다.
   </div>
 
-  <v-row v-else dense>
-    <v-col
+  <div v-else class="todays-pick-grid">
+    <div
       v-for="movie in movies"
       :key="movie.id"
-      cols="6"
-      sm="4"
-      md="2"
-      lg="2"
+      class="todays-pick-col"
     >
       <v-card
-        class="movie-card rounded-0 cursor-pointer"
+        class="movie-card cursor-pointer"
         flat
         @click="goToDetail(movie.id)"
       >
@@ -21,7 +18,7 @@
           :src="posterUrl(movie)"
           aspect-ratio="2/3"
           cover
-          class="bg-grey-darken-4"
+          class="bg-grey-darken-4 poster-image"
         >
           <template v-slot:placeholder>
             <div class="d-flex align-center justify-center fill-height">
@@ -36,8 +33,8 @@
           </div>
         </v-img>
       </v-card>
-    </v-col>
-  </v-row>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -64,6 +61,10 @@ const goToDetail = (id) => {
 .movie-card {
   transition: transform 0.2s ease-in-out;
   position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 2 / 3;
   
   /* 호버 효과 */
   &:hover {
@@ -74,6 +75,23 @@ const goToDetail = (id) => {
         opacity: 1;
     }
   }
+}
+
+.todays-pick-grid {
+  --grid-gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--grid-gap);
+}
+
+.todays-pick-col {
+  min-width: 0;
+}
+
+.movie-card :deep(.v-img) {
+  border-radius: inherit;
+  width: 100%;
+  height: 100%;
 }
 
 /* 기본적으로 오버레이 숨김 */
