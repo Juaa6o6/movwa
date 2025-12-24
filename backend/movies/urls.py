@@ -9,6 +9,7 @@ from .views import (
     MovieLikeView,
     MovieSaveView,
     MovieRateView,
+    UserMovieLogBulkView,
     
     # 마이페이지/목록 조회 View
     MySaveListView,
@@ -43,6 +44,7 @@ urlpatterns = [
     path('<uuid:pk>/save/', MovieSaveView.as_view(), name='movie-save'),
     path('<uuid:pk>/rate/', MovieRateView.as_view(), name='movie-rate'),
     path('<uuid:pk>/related-videos/', MovieRelatedVideosView.as_view(), name='movie-related-videos'),
+    path('user-logs/', UserMovieLogBulkView.as_view(), name='movie-user-logs'),
 
 
     # 3. 사용자 개인화 목록 (My Lists)
