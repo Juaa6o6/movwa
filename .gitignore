@@ -3,7 +3,11 @@ backend/venv/
 backend/__pycache__/
 backend/db.sqlite3
 backend/.env
+backend/media/          # 사용자 업로드 파일 (Git에서 제외!)
+backend/staticfiles/    # collectstatic 결과물
 *.pyc
+
+docs/ref
 
 # === Vue (Frontend) ===
 frontend/node_modules/
