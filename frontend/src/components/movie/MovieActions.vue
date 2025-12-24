@@ -31,9 +31,9 @@
         </v-btn>
       </template>
 
-      <v-card class="pa-4 rounded-xl elevation-10 bg-grey-darken-4" min-width="240">
+      <v-card class="rating-card pa-4 rounded-xl elevation-10 bg-grey-darken-4" min-width="360">
         <div class="text-center mb-2 font-weight-bold text-white">별점을 선택하세요</div>
-        <div class="d-flex justify-center">
+        <div class="rating-row d-flex justify-center">
           <v-rating 
             v-model="ratingValue"
             color="yellow-accent-4" 
@@ -92,5 +92,28 @@ const onRate = (value) => {
   padding: 0 28px;
   font-size: 1rem;
   backdrop-filter: blur(4px);
+}
+
+.rating-card {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+.rating-row {
+  max-width: 100%;
+}
+
+.rating-row :deep(.v-rating) {
+  max-width: 100%;
+  --v-rating-gap: 0px;
+}
+
+.rating-row :deep(.v-rating__wrapper) {
+  gap: 0;
+}
+
+.rating-row :deep(.v-rating__item) {
+  margin-inline: 0;
+  padding-inline: 0;
 }
 </style>
