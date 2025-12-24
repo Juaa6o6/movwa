@@ -10,7 +10,7 @@ urlpatterns = [
     # U-09: 회원 탈퇴 (Soft Delete)
     path('me/delete/', views.UserDeleteView.as_view(), name='user-delete'),
     
-    # U-10: 프로필 수정
+    # U-10: 프로필 수정 (PATCH)
     path('me/update/', views.UserUpdateView.as_view(), name='user-update'),
     
     # U-11: 특정 사용자 프로필 조회

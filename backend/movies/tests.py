@@ -140,7 +140,11 @@ class SpecBasedTodaysPickTestCase(APITestCase):
 class MovieInteractionSignalTest(TestCase):
     def setUp(self):
         # 1. 테스트를 위한 기초 데이터 생성 (유저, 영화)
-        self.user = User.objects.create_user(username='testuser', password='password')
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='testuser@example.com',
+            password='password'
+        )
         self.movie = Movie.objects.create(
             tmdb_id=12345,
             title="테스트 영화",
