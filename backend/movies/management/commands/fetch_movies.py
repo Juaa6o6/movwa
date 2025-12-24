@@ -28,7 +28,7 @@ class Command(BaseCommand):
 
         # 2. 인기 영화 수집 (원하는 페이지 수만큼 조절)
         self.stdout.write(self.style.SUCCESS('\n>>> 2. 인기 영화 데이터 수집 시작...'))
-        TOTAL_PAGES_TO_FETCH = 10 # 10 페이지 = 200개 영화
+        TOTAL_PAGES_TO_FETCH = 50 # 10 페이지 = 200개 영화
 
         for page in range(1, TOTAL_PAGES_TO_FETCH + 1):
             self.stdout.write(f'--- 페이지 {page}/{TOTAL_PAGES_TO_FETCH} ---')
