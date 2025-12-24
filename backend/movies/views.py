@@ -1,6 +1,6 @@
 from django.utils import timezone
 from datetime import timedelta
-from django.db.models import Q, Case, When, IntegerField
+from django.db.models import Q, Case, When, IntegerField, Max
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -11,10 +11,11 @@ from rest_framework.pagination import PageNumberPagination
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.shortcuts import get_object_or_404
 
-from .models import Movie, UserMovieLog
+from .models import Movie, UserMovieLog, BoxOfficeRank
 from .serializers import (
     MovieListSerializer, MovieDetailSerializer,
     MovieLikeSerializer, MovieSaveSerializer, MovieRateSerializer,
+    BoxOfficeRankSerializer,
 )
 
 # 페이지네이션 설정 (기본 10개씩)
@@ -323,3 +324,77 @@ class MovieSearchView(APIView):
         
         # 6. 응답 반환
         return paginator.get_paginated_response(serializer.data)
+
+
+# 박스오피스 순위 조회
+class BoxOfficeView(APIView):
+    permission_classes = [AllowAny]
+    
+    @extend_schema(
+        tags=['movies'],
+        summary="박스오피스 순위 조회",
+        description="KOBIS 기반 박스오피스 순위를 조회합니다. 일간/주간 선택 가능.",
+        parameters=[
+            OpenApiParameter(
+                name='rank_type',
+                description='순위 타입 (daily: 일간[기본], weekly: 주간)',
+                required=False,
+                type=str
+            ),
+            OpenApiParameter(
+                name='limit',
+                description='조회할 순위 개수 (기본 10개)',
+                required=False,
+                type=int
+            ),
+        ],
+        responses={200: BoxOfficeRankSerializer(many=True)}
+    )
+    def get(self, request):
+        # 1. 파라미터 가져오기 및 검증
+        rank_type = request.query_params.get('rank_type', 'daily')
+        
+        # rank_type 검증
+        if rank_type not in ['daily', 'weekly']:
+            return Response(
+                {"error": "rank_type은 'daily' 또는 'weekly'만 가능합니다."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # limit 검증
+        try:
+            limit = int(request.query_params.get('limit', 10))
+            if limit < 1 or limit > 100:
+                raise ValueError
+        except (ValueError, TypeError):
+            return Response(
+                {"error": "limit은 1~100 사이의 숫자여야 합니다."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 2. 최신 날짜의 박스오피스 순위 조회
+        latest_date = BoxOfficeRank.objects.filter(rank_type=rank_type).aggregate(
+            Max('date')
+        )['date__max']
+        
+        if not latest_date:
+            return Response(
+                {"message": "박스오피스 데이터가 없습니다."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # 3. 해당 날짜의 순위 조회 (상위 N개)
+        ranks = BoxOfficeRank.objects.filter(
+            rank_type=rank_type,
+            date=latest_date
+        ).select_related('movie').prefetch_related('movie__genres').order_by('rank')[:limit]
+        
+        # 4. 직렬화
+        serializer = BoxOfficeRankSerializer(ranks, many=True)
+        
+        # 5. 응답 반환
+        return Response({
+            'date': latest_date,
+            'rank_type': rank_type,
+            'results': serializer.data
+        }, status=status.HTTP_200_OK)
