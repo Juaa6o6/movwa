@@ -119,12 +119,13 @@ const genreNames = computed(() => {
 .hero-container {
   position: relative;
   aspect-ratio: 16 / 9;
-  max-height: 700px;
-  min-height: 400px;
+  max-height: 900px;
+  min-height: 480px;
   width: 100%;
   overflow: hidden;
   background-color: #000;
-  border-radius: 0;
+  border-radius: 10px;
+  margin-top: 12px;
 }
 
 .media-bg {
@@ -137,7 +138,7 @@ const genreNames = computed(() => {
 .video-iframe {
   width: 100%;
   height: 100%;
-  transform: scale(1.3); 
+  transform: none; 
   pointer-events: none;
 }
 

@@ -20,6 +20,7 @@
           @pass="home.passCurrentMovie"
           @like="home.likeCurrentMovie"
           @rate="home.rateCurrentMovie"
+          @clear-rate="home.clearRateCurrentMovie"
         />
       </HomeHero>
 
@@ -76,14 +77,16 @@ const goToDetail = () => {
 }
 
 .main-content-wrapper {
-  max-width: 1280px; /* 전체 최대 너비 */
-  margin: 0 auto;    /* 중앙 정렬 */
+  --side-gap: clamp(16px, 5vw, 60px);
+  max-width: 1240px;
+  width: min(1240px, calc(100% - (var(--side-gap) * 2)));
+  margin: 0 auto;
   padding-bottom: 20px;
 }
 
 /* 덱(Deck) 영역 스타일 */
 .deck-wrapper {
   /* Hero와 너비를 맞추기 위해 별도 패딩 없음 (RecommendationDeck 내부에서 처리) */
-  margin-top: 10px; /* Hero와 살짝 띄우기 (완전히 붙이고 싶으면 0으로) */
+  margin-top: 40px; /* Hero와 여백 확보 (썸네일 상승 여유) */
 }
 </style>
