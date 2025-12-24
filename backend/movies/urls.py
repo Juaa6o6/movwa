@@ -17,6 +17,8 @@ from .views import (
     
     # 큐레이션 View
     BoxOfficeView,
+    UpcomingMoviesView,
+    TopRatedMoviesView,
 )
 
 app_name = 'movies'
@@ -27,6 +29,8 @@ urlpatterns = [
     path('', MovieListView.as_view(), name='movie-list'),
     path('search/', MovieSearchView.as_view(), name='movie-search'),  # 반드시 <uuid:pk>/ 보다 위에!
     path('boxoffice/', BoxOfficeView.as_view(), name='boxoffice'),
+    path('upcoming/', UpcomingMoviesView.as_view(), name='upcoming'),
+    path('top-rated/', TopRatedMoviesView.as_view(), name='top-rated'),
     path('<uuid:pk>/', MovieDetailView.as_view(), name='movie-detail'),
 
 
