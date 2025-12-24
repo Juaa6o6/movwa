@@ -1,11 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 // 1. 컴포넌트들을 상단에서 미리 가져옵니다. (가독성 UP)
-import LandingView from '@/views/auth/LandingView.vue'
-import LoginView from '@/views/auth/LoginView.vue'
-import SignupView from '@/views/auth/SignupView.vue'
-import HomeView from '@/views/home/HomeView.vue'
+import LandingView from '@/views/auth/LandingView.vue';
+import LoginView from '@/views/auth/LoginView.vue';
+import SignupView from '@/views/auth/SignupView.vue';
+import HomeView from '@/views/home/HomeView.vue';
 import MovieDetailView from '@/views/movie_detail/MovieDetailView.vue';
+import LibraryView from '@/views/library/LibraryView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -43,6 +44,12 @@ const router = createRouter({
       // 2. 메타 추가: 헤더도 나오고, 로그인 검사도 하게 설정
       meta: { layout: 'default', requiresAuth: true }, 
     },
+    {
+    path: '/library',
+    name: 'library',
+    component: LibraryView,
+    meta: { requiresAuth: true } // 로그인 필요
+  },
   ],
 })
 
