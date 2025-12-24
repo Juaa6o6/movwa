@@ -26,19 +26,36 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f'장르 데이터 수집 실패: {e}'))
             return
 
-        # 2. 인기 영화 수집 (원하는 페이지 수만큼 조절)
-        self.stdout.write(self.style.SUCCESS('\n>>> 2. 인기 영화 데이터 수집 시작...'))
-        TOTAL_PAGES_TO_FETCH = 50 # 10 페이지 = 200개 영화
-
-        for page in range(1, TOTAL_PAGES_TO_FETCH + 1):
-            self.stdout.write(f'--- 페이지 {page}/{TOTAL_PAGES_TO_FETCH} ---')
-            movie_list_url = f"{base_url}/movie/popular?api_key={api_key}&language=ko-KR&page={page}"
+        # 2. 여러 카테고리 영화 수집
+        self.stdout.write(self.style.SUCCESS('\n>>> 2. 영화 데이터 수집 시작...'))
+        
+        # 카테고리별 수집 페이지 수 설정
+        CATEGORIES = {
+            'popular': 5,      # 인기 영화 (400개)
+            'now_playing': 5,  # 현재 상영작 (200개)
+            'upcoming': 5,     # 개봉 예정 (300개)
+            'top_rated': 5     # 평점 높은 영화 (200개)
+        }
+        
+        total_added = 0
+        total_updated = 0
+        
+        for category, total_pages in CATEGORIES.items():
+            self.stdout.write(self.style.SUCCESS(f'\n--- [{category.upper()}] 수집 중 ---'))
             
-            try:
-                list_response = requests.get(movie_list_url)
-                list_response.raise_for_status()
-                movies_data = list_response.json().get('results', [])
-
+            for page in range(1, total_pages + 1):
+                self.stdout.write(f'페이지 {page}/{total_pages}')
+                movie_list_url = f"{base_url}/movie/{category}?api_key={api_key}&language=ko-KR&page={page}"
+                
+                try:
+                    list_response = requests.get(movie_list_url)
+                    list_response.raise_for_status()
+                    movies_data = list_response.json().get('results', [])
+                except requests.exceptions.RequestException as e:
+                    self.stdout.write(self.style.ERROR(f'페이지 {page} 목록 처리 실패: {e}'))
+                    continue  # 다음 페이지로
+                
+                # 각 영화 상세 정보 수집
                 for m in movies_data:
                     tmdb_id = m['id']
                     
@@ -82,8 +99,11 @@ class Command(BaseCommand):
                         movie.genres.set(Genre.objects.filter(id__in=genre_ids))
                         
                         # 진행 상황 출력
-                        action = "생성" if created else "업데이트"
-                        self.stdout.write(f"  - {movie.title} ({action})")
+                        if created:
+                            total_added += 1
+                            self.stdout.write(f"  ✅ {movie.title} (생성)")
+                        else:
+                            total_updated += 1
 
                     except requests.exceptions.RequestException as e:
                         self.stdout.write(self.style.WARNING(f'  [경고] 영화 ID {tmdb_id} 상세 정보 처리 실패: {e}'))
@@ -91,7 +111,5 @@ class Command(BaseCommand):
                     # TMDB API 속도 제한을 피하기 위한 약간의 지연
                     time.sleep(0.1)
 
-            except requests.exceptions.RequestException as e:
-                self.stdout.write(self.style.ERROR(f'페이지 {page} 목록 처리 실패: {e}'))
-
-        self.stdout.write(self.style.SUCCESS('\n>>> 모든 영화 데이터 수집 완료!'))
+        self.stdout.write(self.style.SUCCESS(f'\n>>> 모든 영화 데이터 수집 완료!'))
+        self.stdout.write(self.style.SUCCESS(f'📊 신규 생성: {total_added}개, 업데이트: {total_updated}개'))
