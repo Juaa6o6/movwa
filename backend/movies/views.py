@@ -16,6 +16,7 @@ from .serializers import (
     MovieListSerializer, MovieDetailSerializer,
     MovieLikeSerializer, MovieSaveSerializer, MovieRateSerializer,
     BoxOfficeRankSerializer,
+    YouTubeVideoSerializer,
 )
 
 # 페이지네이션 설정 (기본 10개씩)
@@ -551,3 +552,40 @@ class TopRatedMoviesView(APIView):
         
         # 6. 응답 반환
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# 영화 관련 YouTube 영상 조회
+class MovieRelatedVideosView(APIView):
+    """
+    특정 영화의 관련 YouTube 영상을 조회합니다.
+    
+    - 영화 제목으로 YouTube 검색
+    - 리뷰, 후기, 예고편 영상 포함
+    - 최대 15개 영상 반환
+    """
+    permission_classes = [AllowAny]
+    
+    @extend_schema(
+        tags=['movies'],
+        summary="영화 관련 YouTube 영상 조회",
+        description="영화 제목으로 YouTube에서 리뷰, 후기, 예고편 영상을 검색합니다.",
+        responses={200: YouTubeVideoSerializer(many=True)}
+    )
+    def get(self, request, pk):
+        # 1. 영화 조회
+        movie = get_object_or_404(Movie, pk=pk)
+        
+        # 2. YouTube API로 관련 영상 검색
+        from .youtube_api import fetch_youtube_videos
+        youtube_videos = fetch_youtube_videos(movie.title, max_results=15)
+        
+        # 3. 직렬화
+        serializer = YouTubeVideoSerializer(youtube_videos, many=True)
+        
+        # 4. 응답 반환
+        return Response({
+            'movie_id': str(movie.id),
+            'movie_title': movie.title,
+            'total_videos': len(youtube_videos),
+            'videos': serializer.data
+        }, status=status.HTTP_200_OK)
