@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
 from .models import User, Follow
 from .serializers import (
     UserDetailSerializer,
@@ -14,6 +16,20 @@ from .serializers import (
 
 
 # U-08: 프로필 조회
+@extend_schema(
+    tags=['accounts'],
+    summary='사용자 프로필 조회',
+    description='특정 사용자의 프로필 상세 정보를 조회합니다. username으로 조회하며, 팔로워/팔로잉 수를 포함합니다.',
+    parameters=[
+        OpenApiParameter(
+            name='username',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.PATH,
+            description='조회할 사용자의 username'
+        )
+    ],
+    responses={200: UserDetailSerializer}
+)
 class UserDetailView(generics.RetrieveAPIView):
     """
     특정 사용자의 프로필 상세 정보를 조회합니다.
@@ -31,6 +47,13 @@ class UserDetailView(generics.RetrieveAPIView):
 
 
 # U-09: 프로필 수정
+@extend_schema(
+    tags=['accounts'],
+    summary='내 프로필 수정',
+    description='로그인한 사용자의 프로필을 수정합니다. nickname, bio, profile_image를 수정할 수 있습니다.',
+    request=UserUpdateSerializer,
+    responses={200: UserUpdateSerializer}
+)
 class UserUpdateView(generics.UpdateAPIView):
     """
     로그인한 사용자의 프로필을 수정합니다.
@@ -47,6 +70,36 @@ class UserUpdateView(generics.UpdateAPIView):
 
 
 # U-10: 팔로우 토글
+@extend_schema(
+    tags=['accounts'],
+    summary='팔로우 토글',
+    description='특정 사용자를 팔로우하거나 언팔로우합니다. 이미 팔로우 중이면 언팔로우, 아니면 팔로우합니다.',
+    parameters=[
+        OpenApiParameter(
+            name='username',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.PATH,
+            description='팔로우/언팔로우할 사용자의 username'
+        )
+    ],
+    responses={
+        200: OpenApiTypes.OBJECT,
+        400: OpenApiTypes.OBJECT
+    },
+    examples=[
+        OpenApiExample(
+            '팔로우 성공',
+            value={
+                'detail': '팔로우 했습니다.',
+                'is_following': True,
+                'target_username': 'user2',
+                'followers_count': 10,
+                'following_count': 5
+            },
+            response_only=True
+        )
+    ]
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def follow_toggle(request, username):
@@ -78,6 +131,20 @@ def follow_toggle(request, username):
 
 
 # U-11: 팔로워 목록 조회
+@extend_schema(
+    tags=['accounts'],
+    summary='팔로워 목록 조회',
+    description='특정 사용자를 팔로우하는 사용자 목록을 조회합니다.',
+    parameters=[
+        OpenApiParameter(
+            name='username',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.PATH,
+            description='팔로워 목록을 조회할 사용자의 username'
+        )
+    ],
+    responses={200: UserSimpleSerializer(many=True)}
+)
 class FollowersListView(generics.ListAPIView):
     """
     특정 사용자를 팔로우하는 사용자 목록을 조회합니다.
@@ -93,6 +160,20 @@ class FollowersListView(generics.ListAPIView):
 
 
 # U-12: 팔로잉 목록 조회
+@extend_schema(
+    tags=['accounts'],
+    summary='팔로잉 목록 조회',
+    description='특정 사용자가 팔로우하는 사용자 목록을 조회합니다.',
+    parameters=[
+        OpenApiParameter(
+            name='username',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.PATH,
+            description='팔로잉 목록을 조회할 사용자의 username'
+        )
+    ],
+    responses={200: UserSimpleSerializer(many=True)}
+)
 class FollowingsListView(generics.ListAPIView):
     """
     특정 사용자가 팔로우하는 사용자 목록을 조회합니다.
@@ -108,6 +189,12 @@ class FollowingsListView(generics.ListAPIView):
 
 
 # 추가: 현재 로그인한 내 정보 조회
+@extend_schema(
+    tags=['accounts'],
+    summary='내 정보 조회',
+    description='현재 로그인한 사용자의 프로필 정보를 조회합니다. 프론트엔드에서 Navbar, 프로필 표시용으로 사용됩니다.',
+    responses={200: UserDetailSerializer}
+)
 class CurrentUserView(generics.RetrieveAPIView):
     """
     현재 로그인한 사용자의 프로필 정보를 조회합니다.
@@ -125,6 +212,21 @@ class CurrentUserView(generics.RetrieveAPIView):
 
 
 # 추가: 회원 탈퇴 (Soft Delete)
+@extend_schema(
+    tags=['accounts'],
+    summary='회원 탈퇴',
+    description='현재 로그인한 사용자를 탈퇴 처리합니다 (Soft Delete). DB에서 삭제하지 않고 is_active=False로 변경합니다.',
+    responses={
+        200: OpenApiTypes.OBJECT,
+    },
+    examples=[
+        OpenApiExample(
+            '탈퇴 성공',
+            value={'detail': '회원 탈퇴가 완료되었습니다.'},
+            response_only=True
+        )
+    ]
+)
 class UserDeleteView(generics.DestroyAPIView):
     """
     현재 로그인한 사용자를 탈퇴 처리합니다 (Soft Delete).
