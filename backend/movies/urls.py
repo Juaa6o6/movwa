@@ -3,6 +3,7 @@ from .views import (
     # 기존 조회 View
     MovieListView,
     MovieDetailView,
+    MovieSearchView,
     
     # 상호작용(Action) View
     MovieLikeView,
@@ -21,6 +22,7 @@ urlpatterns = [
 
     # 1. 영화 정보 조회 (Public/General)
     path('', MovieListView.as_view(), name='movie-list'),
+    path('search/', MovieSearchView.as_view(), name='movie-search'),  # 반드시 <uuid:pk>/ 보다 위에!
     path('<uuid:pk>/', MovieDetailView.as_view(), name='movie-detail'),
 
 
