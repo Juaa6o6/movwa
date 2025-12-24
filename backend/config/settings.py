@@ -28,6 +28,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 # 3. API KEY 로드
 TMDB_API_KEY = env('TMDB_API_KEY')
 KOBIS_API_KEY = env('KOBIS_API_KEY', default='')
+YOUTUBE_API_KEY = env('YOUTUBE_API_KEY', default='')
 
 
 # Quick-start development settings - unsuitable for production

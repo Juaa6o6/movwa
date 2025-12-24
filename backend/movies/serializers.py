@@ -2,6 +2,33 @@ from rest_framework import serializers
 from .models import Movie, Genre, UserMovieLog, BoxOfficeRank
 
 
+# YouTube 관련 영상 Serializer
+class YouTubeVideoSerializer(serializers.Serializer):
+    """
+    YouTube 영상 데이터 직렬화
+    
+    youtube_api.py의 fetch_youtube_videos() 반환값을 API 응답으로 변환
+    """
+    video_id = serializers.CharField()
+    title = serializers.CharField()
+    thumbnail = serializers.URLField()
+    url = serializers.SerializerMethodField()  # video_id → YouTube URL 변환
+    channel_title = serializers.CharField()
+    published_at = serializers.CharField()
+    description = serializers.CharField()
+    query_type = serializers.CharField()  # review, trailer
+    
+    def get_url(self, obj):
+        """
+        video_id를 YouTube URL로 변환
+        예: 'abc123' → 'https://www.youtube.com/watch?v=abc123'
+        """
+        video_id = obj.get('video_id')
+        if video_id:
+            return f"https://www.youtube.com/watch?v={video_id}"
+        return None
+
+
 class MovieListSerializer(serializers.ModelSerializer):
     # 장르: ID 대신 ["Action", "Romance"] 형태로 변환
     genres = serializers.SlugRelatedField(

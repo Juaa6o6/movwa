@@ -19,6 +19,9 @@ from .views import (
     BoxOfficeView,
     UpcomingMoviesView,
     TopRatedMoviesView,
+    
+    # YouTube 관련 영상
+    MovieRelatedVideosView,
 )
 
 app_name = 'movies'
@@ -39,6 +42,7 @@ urlpatterns = [
     path('<uuid:pk>/like/', MovieLikeView.as_view(), name='movie-like'),
     path('<uuid:pk>/save/', MovieSaveView.as_view(), name='movie-save'),
     path('<uuid:pk>/rate/', MovieRateView.as_view(), name='movie-rate'),
+    path('<uuid:pk>/related-videos/', MovieRelatedVideosView.as_view(), name='movie-related-videos'),
 
 
     # 3. 사용자 개인화 목록 (My Lists)
