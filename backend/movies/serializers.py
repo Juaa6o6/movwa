@@ -97,6 +97,13 @@ class UserMovieLogSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'movie', 'is_liked', 'is_saved', 'rating', 'updated_at', 'created_at']
         read_only_fields = ['user', 'movie']
 
+class UserMovieLogBriefSerializer(serializers.ModelSerializer):
+    movie_id = serializers.UUIDField(source='movie.id')
+
+    class Meta:
+        model = UserMovieLog
+        fields = ['movie_id', 'is_liked', 'is_saved', 'rating']
+
 
 # 박스오피스 순위 (영화 정보 포함)
 class BoxOfficeRankSerializer(serializers.ModelSerializer):

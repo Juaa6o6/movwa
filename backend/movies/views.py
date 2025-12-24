@@ -15,6 +15,7 @@ from .models import Movie, UserMovieLog, BoxOfficeRank
 from .serializers import (
     MovieListSerializer, MovieDetailSerializer,
     MovieLikeSerializer, MovieSaveSerializer, MovieRateSerializer,
+    UserMovieLogBriefSerializer,
     BoxOfficeRankSerializer,
     YouTubeVideoSerializer,
 )
@@ -271,6 +272,43 @@ class TodaysPickListView(APIView):
         movies = [log.movie for log in logs]
         serializer = MovieListSerializer(movies, many=True)
         
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class UserMovieLogBulkView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        tags=['movies'],
+        summary="사용자 영화 로그 벌크 조회",
+        description="movie_ids 리스트를 받아 해당 영화들의 유저 로그(is_liked/is_saved/rating)를 반환합니다.",
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'movie_ids': {
+                        'type': 'array',
+                        'items': {'type': 'string', 'format': 'uuid'}
+                    }
+                },
+                'required': ['movie_ids']
+            }
+        },
+        responses={200: UserMovieLogBriefSerializer(many=True)}
+    )
+    def post(self, request):
+        movie_ids = request.data.get('movie_ids', [])
+        if not isinstance(movie_ids, list):
+            return Response(
+                {"error": "movie_ids는 배열이어야 합니다."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        logs = UserMovieLog.objects.filter(
+            user=request.user,
+            movie_id__in=movie_ids
+        ).select_related('movie')
+
+        serializer = UserMovieLogBriefSerializer(logs, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
