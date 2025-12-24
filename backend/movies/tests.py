@@ -238,3 +238,141 @@ class MovieInteractionSignalTest(TestCase):
         log.refresh_from_db()
         self.assertIsNone(log.rating)
         self.assertFalse(log.is_saved, "평점을 지웠는데 찜이 되살아났습니다(의도치 않은 동작).")
+
+
+# 검색 기능 테스트
+class MovieSearchTestCase(APITestCase):
+    def setUp(self):
+        # 장르 생성
+        from .models import Genre
+        self.action = Genre.objects.create(id=28, name='액션')
+        self.drama = Genre.objects.create(id=18, name='드라마')
+        self.thriller = Genre.objects.create(id=53, name='스릴러')
+        
+        # 테스트용 영화 생성
+        self.movie1 = Movie.objects.create(
+            title="어벤져스: 엔드게임",
+            original_title="Avengers: Endgame",
+            popularity=100.0,
+            release_date="2019-04-24"
+        )
+        self.movie1.genres.add(self.action)
+        
+        self.movie2 = Movie.objects.create(
+            title="기생충",
+            original_title="Parasite",
+            popularity=90.0,
+            release_date="2019-05-30"
+        )
+        self.movie2.genres.add(self.drama, self.thriller)
+        
+        self.movie3 = Movie.objects.create(
+            title="타짜",
+            original_title="Tazza: The High Rollers",
+            popularity=80.0,
+            release_date="2006-09-28"
+        )
+        self.movie3.genres.add(self.action, self.drama)
+        
+        # 검색어로 시작하는 영화
+        self.movie4 = Movie.objects.create(
+            title="어벤져스",
+            original_title="The Avengers",
+            popularity=95.0,
+            release_date="2012-04-26"
+        )
+        self.movie4.genres.add(self.action)
+        
+        self.search_url = reverse('movies:movie-search')
+    
+    def test_search_without_query(self):
+        """1. 검색어 없이 요청 → 400 에러"""
+        response = self.client.get(self.search_url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+    
+    def test_search_by_title(self):
+        """2. 제목으로 검색"""
+        response = self.client.get(self.search_url, {'q': '어벤져스'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(response.data['count'], 2)  # 최소 2개 (어벤져스, 어벤져스: 엔드게임)
+        
+        # 결과에 '어벤져스'가 포함되어 있는지 확인
+        titles = [movie['title'] for movie in response.data['results']]
+        self.assertTrue(any('어벤져스' in title for title in titles))
+    
+    def test_search_by_original_title(self):
+        """3. 원제로 검색"""
+        response = self.client.get(self.search_url, {'q': 'Avengers'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # 원제에 'Avengers'가 있는 영화가 검색되어야 함 (최소 1개)
+        self.assertGreater(response.data['count'], 0, "원제 'Avengers' 검색 결과가 0개입니다.")
+    
+    def test_search_by_genre(self):
+        """4. 장르로 검색"""
+        response = self.client.get(self.search_url, {'q': '액션'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(response.data['count'], 3)  # 액션 장르 3개
+    
+    def test_search_no_results(self):
+        """5. 검색 결과 없을 때 빈 배열"""
+        response = self.client.get(self.search_url, {'q': '존재하지않는영화제목12345'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 0)
+        self.assertEqual(len(response.data['results']), 0)
+    
+    def test_search_sort_popularity(self):
+        """6. 정렬 - 인기도순 (기본값)"""
+        response = self.client.get(self.search_url, {'q': '어벤져스', 'sort': 'popularity'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # 인기도 높은 순으로 정렬되어 있는지 확인
+        results = response.data['results']
+        if len(results) >= 2:
+            # 첫 번째 영화가 "어벤져스: 엔드게임" (popularity: 100)
+            self.assertEqual(results[0]['title'], '어벤져스: 엔드게임')
+    
+    def test_search_sort_relevance(self):
+        """7. 정렬 - 관련도순"""
+        response = self.client.get(self.search_url, {'q': '어벤져스', 'sort': 'relevance'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        results = response.data['results']
+        if len(results) >= 2:
+            # 정확히 일치하는 "어벤져스"가 먼저 나와야 함
+            self.assertEqual(results[0]['title'], '어벤져스')
+    
+    def test_search_sort_latest(self):
+        """8. 정렬 - 최신순"""
+        response = self.client.get(self.search_url, {'q': '액션', 'sort': 'latest'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        results = response.data['results']
+        if len(results) >= 2:
+            # 개봉일이 최신순으로 정렬되어 있는지 확인 (2019 > 2012 > 2006)
+            # 첫 번째 영화가 2019년 영화여야 함
+            self.assertIn('2019', results[0]['release_date'])
+    
+    def test_search_pagination(self):
+        """9. 페이지네이션 동작"""
+        # 페이지네이션 전용 유니크한 영화 생성 (20개)
+        for i in range(20):
+            movie = Movie.objects.create(
+                title=f"페이지네이션전용테스트{i:03d}",
+                original_title=f"PaginationUniqueTest{i:03d}",
+                popularity=float(i),
+                release_date="2024-01-01"
+            )
+            movie.genres.add(self.action)
+        
+        # 첫 페이지 요청 (유니크한 검색어 사용)
+        response = self.client.get(self.search_url, {'q': '페이지네이션전용테스트'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 20, "전체 결과 수가 20개가 아닙니다.")
+        self.assertEqual(len(response.data['results']), 10, "첫 페이지에 10개가 나와야 합니다.")
+        self.assertIsNotNone(response.data['next'], "다음 페이지 링크가 없습니다.")
+        
+        # 두 번째 페이지 요청
+        response2 = self.client.get(self.search_url, {'q': '페이지네이션전용테스트', 'page': 2})
+        self.assertEqual(response2.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response2.data['results']), 10, "두 번째 페이지에 10개가 나와야 합니다.")
