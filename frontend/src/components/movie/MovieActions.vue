@@ -24,6 +24,7 @@
           :variant="status === 'rated' ? 'flat' : 'outlined'"
           :color="status === 'rated' ? 'yellow-accent-4' : 'white'"
           :class="['action-btn', {'text-black': status === 'rated'}]"
+          @click="onRateButtonClick"
           v-bind="props"
         >
           <v-icon start>{{ status === 'rated' ? 'mdi-star' : 'mdi-star-outline' }}</v-icon>
@@ -62,17 +63,26 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, nextTick } from "vue";
 
 const props = defineProps({
     // 부모로부터 현재 영화의 상태를 받음 (liked, passed, rated, null)
     status: { type: String, default: null } 
 });
 
-const emit = defineEmits(["pass", "rate", "like"]);
+const emit = defineEmits(["pass", "rate", "like", "clear-rate"]);
 
 const menuOpen = ref(false);
 const ratingValue = ref(0);
+
+const onRateButtonClick = () => {
+    if (props.status !== 'rated') return;
+    emit('clear-rate');
+    ratingValue.value = 0;
+    nextTick(() => {
+        menuOpen.value = true;
+    });
+};
 
 // 별점 클릭 시 자동 동작 (확인 버튼 없음)
 const onRate = (value) => {

@@ -34,13 +34,23 @@ export default {
     return http.post(`/api/v1/movies/${movieId}/rate/`, { rating });
   },
 
-  // SAVE (POST /movies/{id}/save/)
-  saveMovie(movieId) {
-    return http.post(`/api/v1/movies/${movieId}/save/`);
+  // RATE 삭제 (DELETE /movies/{id}/rate/)
+  deleteRate(movieId) {
+    return http.delete(`/api/v1/movies/${movieId}/rate/`);
+  },
+
+  // SAVE (POST /movies/{id}/save/) body: { is_saved: true/false }
+  saveMovie(movieId, is_saved = true) {
+    return http.post(`/api/v1/movies/${movieId}/save/`, { is_saved });
   },
 
   // 오늘의 픽 (GET /movies/my/todays-pick/)
   getTodayPicks() {
     return http.get(`/api/v1/movies/my/todays-pick/`);
+  },
+
+  // 유저 로그 벌크 조회 (POST /movies/user-logs/)
+  getUserMovieLogs(movieIds = []) {
+    return http.post(`/api/v1/movies/user-logs/`, { movie_ids: movieIds });
   },
 };
