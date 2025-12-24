@@ -53,9 +53,13 @@ class ProfileImageMixin(serializers.Serializer):
 
     def get_profile_image_url(self, obj):
         # obj가 User인 경우 profile로 접근, Profile인 경우 그대로 사용
-        profile = getattr(obj, 'profile', obj) if isinstance(obj, User) else obj
+        profile = getattr(obj, 'profile', None)
         
-        if profile and profile.profile_image:
+        # profile이 없으면 obj가 Profile일 수도 있음
+        if profile is None and hasattr(obj, 'profile_image'):
+            profile = obj
+        
+        if profile and hasattr(profile, 'profile_image') and profile.profile_image:
             request = self.context.get('request')
             if request:
                 return request.build_absolute_uri(profile.profile_image.url)
@@ -129,18 +133,19 @@ class UserDetailSerializer(ProfileImageMixin, serializers.ModelSerializer):
         return False
 
 
-class UserUpdateSerializer(serializers.ModelSerializer):
+class UserUpdateSerializer(ProfileImageMixin, serializers.ModelSerializer):
     """
     회원정보 수정 (User 테이블 + Profile 테이블 동시 수정)
     닉네임 + 프로필(bio, image) 수정
     """
     
     bio = serializers.CharField(required=False, allow_blank=True)
-    profile_image = serializers.ImageField(required=False, allow_null=True)
+    profile_image = serializers.ImageField(required=False, allow_null=True, write_only=True)
 
     class Meta:
         model = User
-        fields = ['nickname', 'bio', 'profile_image']
+        fields = ['nickname', 'bio', 'profile_image', 'profile_image_url']
+        read_only_fields = ['profile_image_url']
 
     def validate_profile_image(self, value):
         # 이미지 크기 제한 (5MB)
@@ -150,8 +155,9 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         # 1. User 정보 수정 (nickname)
-        instance.nickname = validated_data.get('nickname', instance.nickname)
-        instance.save()
+        if 'nickname' in validated_data:
+            instance.nickname = validated_data['nickname']
+            instance.save()
 
         # 2. Profile 정보 수정 (bio, image)
         # Signal로 프로필이 자동 생성되지만, 만약을 대비한 방어 코드
@@ -167,6 +173,9 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             profile.profile_image = validated_data['profile_image']
         
         profile.save()
+        
+        # 3. profile을 다시 로드하여 최신 상태 반영
+        instance.refresh_from_db()
         return instance
 
 

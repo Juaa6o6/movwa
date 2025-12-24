@@ -2,9 +2,10 @@ from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample, inline_serializer
 from drf_spectacular.types import OpenApiTypes
 from .models import User, Follow
 from .serializers import (
@@ -50,8 +51,24 @@ class UserDetailView(generics.RetrieveAPIView):
 @extend_schema(
     tags=['accounts'],
     summary='내 프로필 수정',
-    description='로그인한 사용자의 프로필을 수정합니다. nickname, bio, profile_image를 수정할 수 있습니다.',
-    request=UserUpdateSerializer,
+    description='''로그인한 사용자의 프로필을 수정합니다.
+    
+**파일 업로드 방법:**
+1. Request body 우측 드롭다운에서 `multipart/form-data` 선택
+2. nickname, bio는 텍스트로 입력
+3. profile_image는 파일을 직접 업로드 (이미지 파일만 가능)
+4. 이미지만 삭제하려면 profile_image에 null 전송
+    ''',
+    request={
+        'multipart/form-data': {
+            'type': 'object',
+            'properties': {
+                'nickname': {'type': 'string', 'example': '새닉네임'},
+                'bio': {'type': 'string', 'example': '안녕하세요!'},
+                'profile_image': {'type': 'string', 'format': 'binary'}
+            }
+        }
+    },
     responses={200: UserUpdateSerializer}
 )
 class UserUpdateView(generics.UpdateAPIView):
@@ -62,6 +79,8 @@ class UserUpdateView(generics.UpdateAPIView):
     """
     serializer_class = UserUpdateSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]  # 파일 업로드 지원
+    http_method_names = ['patch']  # PATCH만 허용 (부분 수정)
     
     def get_object(self):
         # 항상 현재 로그인한 사용자의 프로필을 수정

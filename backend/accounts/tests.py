@@ -158,7 +158,7 @@ class ProfileAPITest(APITestCase):
             'nickname': '변경된닉네임',
             'bio': '자기소개입니다.'
         }
-        response = self.client.put(url, data)
+        response = self.client.patch(url, data)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user1.refresh_from_db()
@@ -169,7 +169,7 @@ class ProfileAPITest(APITestCase):
         """비로그인 프로필 수정 실패 테스트"""
         url = reverse('accounts:user-update')
         data = {'nickname': '변경시도'}
-        response = self.client.put(url, data)
+        response = self.client.patch(url, data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
     
     def test_user_delete(self):
