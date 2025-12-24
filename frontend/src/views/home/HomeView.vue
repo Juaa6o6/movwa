@@ -20,6 +20,7 @@
           @pass="home.passCurrentMovie"
           @like="home.likeCurrentMovie"
           @rate="home.rateCurrentMovie"
+          @clear-rate="home.clearRateCurrentMovie"
         />
       </HomeHero>
 
