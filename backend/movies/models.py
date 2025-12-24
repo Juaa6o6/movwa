@@ -90,3 +90,37 @@ class UserMovieRecommend(models.Model):
                 name='unique_user_movie_algo_recommend'
             )
         ]
+
+
+# [DB 명세] 박스오피스 순위 (KOBIS API 연동)
+class BoxOfficeRank(models.Model):
+    RANK_TYPE_CHOICES = [
+        ('daily', '일간'),
+        ('weekly', '주간'),
+    ]
+    
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='boxoffice_ranks')
+    rank = models.IntegerField() # 순위 (1, 2, 3, ...)
+    rank_type = models.CharField(max_length=20, choices=RANK_TYPE_CHOICES, default='daily') # 순위 타입
+    date = models.DateField() # 기준일 (일간: 해당일, 주간: 주 시작일)
+    
+    # KOBIS 추가 정보
+    audience_count = models.IntegerField(default=0) # 관객 수
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['date', 'rank'] # 날짜, 순위 순 정렬
+        constraints = [
+            models.UniqueConstraint(
+                fields=['movie', 'rank_type', 'date'],
+                name='unique_movie_rank_type_date'
+            )
+        ]
+        indexes = [
+            models.Index(fields=['rank_type', 'date', 'rank']), # 조회 최적화
+        ]
+    
+    def __str__(self):
+        return f"{self.date} {self.get_rank_type_display()} {self.rank}위 - {self.movie.title}"

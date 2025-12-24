@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Movie, Genre, UserMovieLog
+from .models import Movie, Genre, UserMovieLog, BoxOfficeRank
 
 
 class MovieListSerializer(serializers.ModelSerializer):
@@ -69,4 +69,21 @@ class UserMovieLogSerializer(serializers.ModelSerializer):
         model = UserMovieLog
         fields = ['id', 'user', 'movie', 'is_liked', 'is_saved', 'rating', 'updated_at', 'created_at']
         read_only_fields = ['user', 'movie']
-        
+
+
+# 박스오피스 순위 (영화 정보 포함)
+class BoxOfficeRankSerializer(serializers.ModelSerializer):
+    movie = MovieListSerializer(read_only=True)  # 영화 상세 정보 포함
+    rank_type_display = serializers.CharField(source='get_rank_type_display', read_only=True)  # '일간' or '주간'
+    
+    class Meta:
+        model = BoxOfficeRank
+        fields = [
+            'id',
+            'movie',
+            'rank',
+            'rank_type',
+            'rank_type_display',
+            'date',
+            'audience_count',
+        ]
