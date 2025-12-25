@@ -11,6 +11,10 @@ import LibraryRatedGroupView from '@/views/library/LibraryRatedGroupView.vue';
 import MoviesView from '@/views/movies/MoviesView.vue';
 import MoviesGenreView from '@/views/movies/MoviesGenreView.vue';
 import SearchView from '@/views/search/SearchView.vue';
+import ProfileView from '@/views/profile/ProfileView.vue';
+import ProfileFollowingsView from '@/views/profile/ProfileFollowingsView.vue';
+import ProfileFollowersView from '@/views/profile/ProfileFollowersView.vue';
+import ProfileReviewsView from '@/views/profile/ProfileReviewsView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -78,6 +82,30 @@ const router = createRouter({
       path: '/search',
       name: 'search',
       component: SearchView,
+      meta: { layout: 'default', requiresAuth: true },
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: ProfileView,
+      meta: { layout: 'default', requiresAuth: true },
+    },
+    {
+      path: '/profile/followings',
+      name: 'profileFollowings',
+      component: ProfileFollowingsView,
+      meta: { layout: 'default', requiresAuth: true },
+    },
+    {
+      path: '/profile/followers',
+      name: 'profileFollowers',
+      component: ProfileFollowersView,
+      meta: { layout: 'default', requiresAuth: true },
+    },
+    {
+      path: '/profile/reviews',
+      name: 'profileReviews',
+      component: ProfileReviewsView,
       meta: { layout: 'default', requiresAuth: true },
     },
   ],
