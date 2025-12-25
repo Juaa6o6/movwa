@@ -2,9 +2,10 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import libraryApi from '@/api/libraryApi';
+import moviesApi from '@/api/moviesApi';
 
 // [테스트 모드]
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false;
 
 export const useLibraryStore = defineStore('library', () => {
   const savedMovies = ref([]);
@@ -76,7 +77,7 @@ export const useLibraryStore = defineStore('library', () => {
         setTimeout(() => { savedMovies.value = mockSavedData; isLoading.value = false; }, 500);
       } else {
         const res = await libraryApi.getSavedMovies();
-        savedMovies.value = res.data;
+        savedMovies.value = Array.isArray(res.data) ? res.data : [];
         isLoading.value = false;
       }
     } catch (err) {
@@ -92,7 +93,26 @@ export const useLibraryStore = defineStore('library', () => {
         setTimeout(() => { ratedMoviesRaw.value = mockRatedData; isLoading.value = false; }, 500);
       } else {
         const res = await libraryApi.getRatedMovies();
-        ratedMoviesRaw.value = res.data; 
+        const movies = Array.isArray(res.data) ? res.data : [];
+        if (movies.length === 0) {
+          ratedMoviesRaw.value = [];
+          isLoading.value = false;
+          return;
+        }
+
+        const movieIds = movies.map((movie) => movie.id);
+        const logRes = await moviesApi.getUserMovieLogs(movieIds);
+        const logs = Array.isArray(logRes.data) ? logRes.data : [];
+        const ratingMap = new Map(
+          logs.map((log) => [log.movie_id, log.rating])
+        );
+
+        ratedMoviesRaw.value = movies
+          .map((movie) => ({
+            movie,
+            rating: ratingMap.get(movie.id),
+          }))
+          .filter((item) => item.rating !== null && item.rating !== undefined);
         isLoading.value = false;
       }
     } catch (err) {
