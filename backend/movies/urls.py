@@ -14,6 +14,7 @@ from .views import (
     # 마이페이지/목록 조회 View
     MySaveListView,
     MyRatedListView,
+    MyRatedLogListView,
     TodaysPickListView,
     
     # 큐레이션 View
@@ -51,5 +52,6 @@ urlpatterns = [
     # URL 구조: /movies/my/{list_type}/
     path('my/saved/', MySaveListView.as_view(), name='my-saved-list'),
     path('my/rated/', MyRatedListView.as_view(), name='my-rated-list'),
+    path('my/rated/logs/', MyRatedLogListView.as_view(), name='my-rated-log-list'),
     path('my/todays-pick/', TodaysPickListView.as_view(), name='todays-pick'),
 ]

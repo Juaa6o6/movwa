@@ -1,17 +1,18 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from accounts.serializers import ProfileImageMixin
 from .models import Review
 from movies.models import Movie
 
 User = get_user_model()
 
-class ReviewUserSerializer(serializers.ModelSerializer):
+class ReviewUserSerializer(ProfileImageMixin, serializers.ModelSerializer):
     """
     리뷰 작성자 정보 (닉네임, 프사 등)
     """
     class Meta:
         model = User
-        fields = ('id', 'nickname')     # 'profile_image_url' 
+        fields = ('id', 'nickname', 'profile_image_url')     # 'profile_image_url' 
 
 class ReviewSerializer(serializers.ModelSerializer):
     """
@@ -87,7 +88,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 class MovieTitleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Movie
-        fields = ('id', 'title', 'poster_path')
+        fields = ('id', 'title', 'poster_path', 'release_date')
 
 class MyReviewSerializer(ReviewSerializer):
     """
