@@ -7,6 +7,7 @@ import SignupView from '@/views/auth/SignupView.vue';
 import HomeView from '@/views/home/HomeView.vue';
 import MovieDetailView from '@/views/movie_detail/MovieDetailView.vue';
 import LibraryView from '@/views/library/LibraryView.vue';
+import LibraryRatedGroupView from '@/views/library/LibraryRatedGroupView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -45,11 +46,18 @@ const router = createRouter({
       meta: { layout: 'default', requiresAuth: true }, 
     },
     {
-    path: '/library',
-    name: 'library',
-    component: LibraryView,
-    meta: { requiresAuth: true } // 로그인 필요
-  },
+      path: '/library',
+      name: 'library',
+      component: LibraryView,
+      meta: { layout: 'default', requiresAuth: true },
+    },
+    {
+      path: '/library/ratings/:score',
+      name: 'libraryRatedGroup',
+      component: LibraryRatedGroupView,
+      meta: { layout: 'default', requiresAuth: true },
+      props: true,
+    },
   ],
 })
 
