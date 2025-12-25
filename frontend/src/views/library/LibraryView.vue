@@ -342,7 +342,7 @@ const goToRatedGroup = (score) => {
   grid-template-columns: repeat(auto-fit, var(--saved-card-width));
   column-gap: 10px;
   row-gap: 30px;
-  justify-content: center;
+  justify-content: start;
 }
 
 .saved-grid .saved-card {
