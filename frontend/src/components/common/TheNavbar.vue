@@ -51,7 +51,7 @@
       <v-card>
         <v-card-text>
           <div class="mx-auto text-center">
-            <h3>{{ authStore.user?.username || '사용자' }}</h3>
+            <h3>{{ authStore.user?.username || '프로필' }}</h3>
             <p class="text-caption mt-1">{{ authStore.user?.email }}</p>
             <v-divider class="my-3"></v-divider>
             <v-btn rounded variant="text" block @click="handleLogout">로그아웃</v-btn>
