@@ -1,11 +1,11 @@
 <template>
   <v-container class="py-10" fluid>
     <div class="reviews-wrapper">
-      <h1 class="page-title">코멘트</h1>
+      <h1 class="page-title">리뷰</h1>
 
       <v-tabs v-model="activeTab" class="reviews-tabs" align-tabs="start">
-        <v-tab value="written">작성한 코멘트</v-tab>
-        <v-tab value="liked">좋아요한 코멘트</v-tab>
+        <v-tab value="written">작성한 리뷰</v-tab>
+        <v-tab value="liked">좋아요한 리뷰</v-tab>
       </v-tabs>
 
       <v-window v-model="activeTab" class="reviews-window">
@@ -14,7 +14,7 @@
           <div v-else-if="error" class="state-text error">{{ error }}</div>
           <div v-else>
             <div v-if="reviews.length === 0" class="state-text empty">
-              작성한 코멘트가 없습니다.
+              작성한 리뷰가 없습니다.
             </div>
             <div v-else class="review-list">
               <article v-for="review in reviews" :key="review.id" class="review-card">
@@ -54,8 +54,18 @@
                 </div>
 
                 <div class="review-actions">
-                  <v-icon icon="mdi-thumb-up-outline" size="16" color="grey-darken-1"></v-icon>
-                  <span>{{ review.like_count ?? 0 }}</span>
+                  <div class="review-like">
+                    <v-icon icon="mdi-thumb-up-outline" size="16" color="grey-darken-1"></v-icon>
+                    <span>{{ review.like_count ?? 0 }}</span>
+                  </div>
+                  <v-btn
+                    variant="text"
+                    size="small"
+                    class="delete-btn"
+                    @click="deleteReview(review)"
+                  >
+                    리뷰 삭제하기
+                  </v-btn>
                 </div>
               </article>
             </div>
@@ -63,7 +73,7 @@
         </v-window-item>
         <v-window-item value="liked">
           <div class="state-text empty">
-            좋아요한 코멘트는 아직 제공되지 않습니다.
+            좋아요한 리뷰는 아직 제공되지 않습니다.
           </div>
         </v-window-item>
       </v-window>
@@ -109,13 +119,26 @@ const loadMyReviews = async () => {
     reviews.value = list;
   } catch (err) {
     console.error("내 리뷰 조회 실패:", err);
-    error.value = "코멘트를 불러오지 못했습니다.";
+    error.value = "리뷰를 불러오지 못했습니다.";
   } finally {
     loading.value = false;
   }
 };
 
 onMounted(loadMyReviews);
+
+const deleteReview = async (review) => {
+  if (!review?.id) return;
+  const confirmed = window.confirm("리뷰를 삭제할까요?");
+  if (!confirmed) return;
+  try {
+    await reviewsApi.deleteReview(review.id);
+    reviews.value = reviews.value.filter((item) => item.id !== review.id);
+  } catch (err) {
+    console.error("리뷰 삭제 실패:", err);
+    window.alert("리뷰 삭제에 실패했습니다.");
+  }
+};
 </script>
 
 <style scoped>
@@ -260,9 +283,23 @@ onMounted(loadMyReviews);
 .review-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: space-between;
+  gap: 8px;
   font-size: 0.85rem;
   color: #6b7280;
+}
+
+.review-like {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.delete-btn {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: none;
 }
 
 .state-text {

@@ -3,15 +3,15 @@
     
     <div class="media-bg">
       <iframe
-        v-if="videoUrl"
-        class="video-iframe"
+        v-if="showVideo && videoUrl"
+        class="video-iframe is-active"
         :src="videoUrl"
         frameborder="0"
         allow="autoplay; encrypted-media; loop"
         allowfullscreen
       ></iframe>
       
-      <div v-else class="img-bg" :style="bgStyle" />
+      <div class="img-bg" :class="{ 'is-hidden': showVideo && videoUrl }" :style="bgStyle" />
     </div>
 
     <div class="overlay" />
@@ -56,12 +56,12 @@
             <span>{{ movie.vote_average.toFixed(1) }}</span>
           </div>
           
-          <span v-if="movie?.genres?.length" class="mr-4">
-            {{ genreNames }}
+          <span v-if="primaryGenre" class="mr-4">
+            {{ primaryGenre }}
           </span>
           
-          <span v-if="movie?.runtime > 0">
-            {{ movie.runtime }}분
+          <span v-if="formattedRuntime">
+            {{ formattedRuntime }}
           </span>
         </div>
         <p class="mt-4 text-body-1 text-grey-lighten-3 opacity-80 text-truncate-2" style="max-width: 600px;">
@@ -85,7 +85,7 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref, watch, onBeforeUnmount } from "vue";
 
 const props = defineProps({
   movie: { type: Object, default: null },
@@ -105,13 +105,50 @@ const bgStyle = computed(() => {
 const videoUrl = computed(() => {
   if (!props.movie?.youtube_key) return null;
   const muteParam = props.isMuted ? '1' : '0';
-  return `https://www.youtube.com/embed/${props.movie.youtube_key}?autoplay=1&mute=${muteParam}&controls=0&modestbranding=1&rel=0&loop=1&playlist=${props.movie.youtube_key}&enablejsapi=1`;
+  return `https://www.youtube.com/embed/${props.movie.youtube_key}?autoplay=1&mute=${muteParam}&controls=0&modestbranding=1&rel=0&loop=1&playlist=${props.movie.youtube_key}&playsinline=1&iv_load_policy=3&fs=0&disablekb=1&enablejsapi=1`;
 });
 
-// 장르 이름 연결 (예: 액션 · 모험)
-const genreNames = computed(() => {
-  if (!props.movie?.genres?.length) return '';
-  return props.movie.genres.map(g => g.name).join(' · ');
+const showVideo = ref(false);
+let videoTimer = null;
+
+const resetVideoTimer = () => {
+  showVideo.value = false;
+  if (videoTimer) {
+    clearTimeout(videoTimer);
+    videoTimer = null;
+  }
+  if (videoUrl.value) {
+    videoTimer = setTimeout(() => {
+      showVideo.value = true;
+    }, 2000);
+  }
+};
+
+watch(() => props.movie?.id, resetVideoTimer, { immediate: true });
+watch(videoUrl, resetVideoTimer);
+
+onBeforeUnmount(() => {
+  if (videoTimer) {
+    clearTimeout(videoTimer);
+  }
+});
+
+// 대표 장르 (첫 번째)
+const primaryGenre = computed(() => {
+  const genres = props.movie?.genres || [];
+  if (!genres.length) return '';
+  const first = genres[0];
+  return first?.name || first || '';
+});
+
+const formattedRuntime = computed(() => {
+  const runtime = props.movie?.runtime;
+  if (!runtime) return '';
+  const hours = Math.floor(runtime / 60);
+  const minutes = runtime % 60;
+  if (hours && minutes) return `${hours}시간 ${minutes}분`;
+  if (hours) return `${hours}시간`;
+  return `${minutes}분`;
 });
 </script>
 
@@ -140,6 +177,8 @@ const genreNames = computed(() => {
   height: 100%;
   transform: none; 
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 600ms ease;
 }
 
 .img-bg {
@@ -149,6 +188,16 @@ const genreNames = computed(() => {
   background-position: center top;
   transition: transform 10s ease;
   transform: scale(1.1);
+  opacity: 1;
+  transition: opacity 600ms ease, transform 10s ease;
+}
+
+.video-iframe.is-active {
+  opacity: 1;
+}
+
+.img-bg.is-hidden {
+  opacity: 0;
 }
 
 .overlay { 
