@@ -40,7 +40,7 @@ SECRET_KEY = 'django-insecure-7ks))u+d@^jh^_wyc2s)l7*_8r0=4u17nr0xp#0tqvxd&w6#m2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 
 # Application definition
@@ -217,6 +217,19 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",    # Vite(Vue) 기본 포트
+    "http://localhost:8080",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:8080",
+]
+
+# 쿠키 기반 인증 허용
+CORS_ALLOW_CREDENTIALS = True
+
+# CSRF 허용 Origin (쿠키 기반 인증용)
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5173",
     "http://localhost:8080",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5173",
