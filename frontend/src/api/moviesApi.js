@@ -53,4 +53,24 @@ export default {
   getUserMovieLogs(movieIds = []) {
     return http.post(`/api/v1/movies/user-logs/`, { movie_ids: movieIds });
   },
+
+  // 박스오피스 (GET /movies/boxoffice/)
+  getBoxOffice(limit = 10) {
+    return http.get(`/api/v1/movies/boxoffice/`, { params: { limit } });
+  },
+
+  // 개봉 예정 (GET /movies/upcoming/)
+  getUpcomingMovies(limit = 10) {
+    return http.get(`/api/v1/movies/upcoming/`, { params: { limit } });
+  },
+
+  // 평점 높은 영화 (GET /movies/top-rated/)
+  getTopRatedMovies(limit = 10) {
+    return http.get(`/api/v1/movies/top-rated/`, { params: { limit } });
+  },
+
+  // 전체 영화 목록 (GET /movies/)
+  getMoviesList(pageSize = 100) {
+    return http.get(`/api/v1/movies/`, { params: { page_size: pageSize } });
+  },
 };
