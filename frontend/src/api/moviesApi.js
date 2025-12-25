@@ -73,4 +73,9 @@ export default {
   getMoviesList(pageSize = 100) {
     return http.get(`/api/v1/movies/`, { params: { page_size: pageSize } });
   },
+
+  // 영화 검색 (GET /movies/search/)
+  searchMovies(query, sort = 'popularity', page = 1) {
+    return http.get(`/api/v1/movies/search/`, { params: { q: query, sort, page } });
+  },
 };
