@@ -6,6 +6,10 @@ export default {
   getMovieDetail(movieId) {
     return http.get(`/api/v1/movies/${movieId}/`);
   },
+  // Movie related videos (GET /movies/{id}/related-videos/)
+  getRelatedVideos(movieId) {
+    return http.get(`/api/v1/movies/${movieId}/related-videos/`);
+  },
   // Movie reviews (GET /reviews/?movie_id=...)
   getMovieReviews(movieId) {
     return http.get(`/api/v1/reviews/`, { params: { movie_id: movieId } });
@@ -14,9 +18,13 @@ export default {
   // HOME (REC-01~09)
   // -----------------------
 
-  // 추천 10개 (GET /movies/?page_size=10)
-  getRecommendations(limit = 10) {
-    return http.get(`/api/v1/movies/`, { params: { page_size: limit } });
+  // 추천 10개 (GET /movies/?page_size=10&sort=popularity)
+  getRecommendations(limit = 10, genreIds = []) {
+    const params = { page_size: limit, sort: 'popularity', exclude_future: 1 };
+    if (Array.isArray(genreIds) && genreIds.length) {
+      params.genres = genreIds.join(',');
+    }
+    return http.get(`/api/v1/movies/`, { params });
   },
 
   // PASS (POST /movies/{id}/like/) body: { is_liked: false }

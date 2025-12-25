@@ -1,30 +1,30 @@
 <template>
-  <v-sheet color="black" class="movie-hero d-flex align-center justify-center position-relative">
-    <iframe
-      v-if="youtubeUrl"
-      width="100%" height="100%"
-      :src="youtubeUrl"
-      title="YouTube video player"
-      frameborder="0" allowfullscreen
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      class="movie-hero__media movie-hero__media--video"
-      style="z-index: 1;"
-    ></iframe>
-    
-    <v-img
-      v-else
-      :src="movie.backdrop_path"
-      class="movie-hero__media movie-hero__media--image"
-      contain height="100%"
-    >
-      <template v-slot:placeholder>
-        <div class="d-flex align-center justify-center fill-height">
-          <v-progress-circular indeterminate color="grey-lighten-4"></v-progress-circular>
-        </div>
-      </template>
-    </v-img>
+  <v-sheet color="white" class="movie-hero d-flex align-center justify-center position-relative">
+    <div class="movie-hero__inner">
+      <iframe
+        v-if="youtubeUrl"
+        :src="youtubeUrl"
+        title="YouTube video player"
+        frameborder="0"
+        allowfullscreen
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        class="movie-hero__media movie-hero__media--video"
+      ></iframe>
 
-    </v-sheet>
+      <v-img
+        v-else
+        :src="movie.backdrop_path"
+        class="movie-hero__media movie-hero__media--image"
+        cover
+      >
+        <template v-slot:placeholder>
+          <div class="d-flex align-center justify-center fill-height">
+            <v-progress-circular indeterminate color="grey-lighten-4"></v-progress-circular>
+          </div>
+        </template>
+      </v-img>
+    </div>
+  </v-sheet>
 </template>
 
 <script setup>
@@ -37,10 +37,20 @@ defineProps({
 <style scoped>
 .movie-hero {
   width: 100%;
-  aspect-ratio: 16 / 9;
-  height: auto;
-  overflow: hidden;
+  height: 72vh;
+  min-height: 690px;
+  max-height: 900px;
   position: relative;
+  border-radius: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.movie-hero__inner {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
 }
 
 .movie-hero__media {
@@ -50,6 +60,11 @@ defineProps({
 }
 
 .movie-hero__media--video {
-  position: static;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 105%;
+  height: 105%;
+  transform: translate(-50%, -50%);
 }
 </style>

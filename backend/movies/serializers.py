@@ -43,6 +43,8 @@ class MovieListSerializer(serializers.ModelSerializer):
             'id', 
             'title', 
             'poster_path', 
+            'backdrop_path',
+            'youtube_key',
             'vote_average', 
             'release_date', 
             'original_language',  # 국가/언어 정보 (예: 'en', 'ko')

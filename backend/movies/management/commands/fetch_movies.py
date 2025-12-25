@@ -31,10 +31,10 @@ class Command(BaseCommand):
         
         # 카테고리별 수집 페이지 수 설정
         CATEGORIES = {
-            'popular': 5,      # 인기 영화 (400개)
-            'now_playing': 5,  # 현재 상영작 (200개)
-            'upcoming': 5,     # 개봉 예정 (300개)
-            'top_rated': 5     # 평점 높은 영화 (200개)
+            'popular': 20,      # 인기 영화 (400개)
+            'now_playing': 5,  # 현재 상영작 (100개)
+            'upcoming': 15,     # 개봉 예정 (300개)
+            'top_rated': 20,     # 평점 높은 영화 (400개)
         }
         
         total_added = 0

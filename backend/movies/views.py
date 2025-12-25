@@ -57,6 +57,9 @@ class MovieListView(APIView):
         parameters=[
             OpenApiParameter(name='page', description='페이지 번호', required=False, type=int),
             OpenApiParameter(name='language', description='언어 필터 (ko: 한글[기본값], all: 전체, en: 영어)', required=False, type=str),
+            OpenApiParameter(name='genres', description='장르 ID 목록 (예: 1,2,3)', required=False, type=str),
+            OpenApiParameter(name='sort', description='정렬 기준 (release_date|popularity)', required=False, type=str),
+            OpenApiParameter(name='exclude_future', description='개봉 예정 제외 (true/1)', required=False, type=str),
         ],
         responses={200: MovieListSerializer(many=True)}
     )
@@ -67,9 +70,29 @@ class MovieListView(APIView):
         # 2. 언어 필터링 적용
         movies = apply_language_filter(movies, request)
         
-        # 3. 정렬
-        movies = movies.order_by('-release_date')
-        
+        # 3. 장르 필터링 적용 (선택)
+        genre_param = request.query_params.get('genres')
+        if genre_param:
+            try:
+                genre_ids = [int(gid) for gid in genre_param.split(',') if gid.strip().isdigit()]
+                if genre_ids:
+                    movies = movies.filter(genres__id__in=genre_ids).distinct()
+            except ValueError:
+                pass
+
+        # 4. 개봉 예정 제외 (선택)
+        exclude_future = request.query_params.get('exclude_future')
+        if exclude_future in ('1', 'true', 'True'):
+            today = date.today()
+            movies = movies.filter(release_date__lte=today)
+
+        # 4. 정렬
+        sort = request.query_params.get('sort', 'release_date')
+        if sort == 'popularity':
+            movies = movies.order_by('-popularity', '-release_date')
+        else:
+            movies = movies.order_by('-release_date')
+
         # 4. 페이지네이션 처리
         
         # 4. 페이지네이션 처리
