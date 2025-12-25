@@ -1,5 +1,6 @@
 import { defineStore } from "pinia"
 import authApi from "@/api/authApi"
+import accountsApi from "@/api/accountsApi"
 
 const USE_MOCK_LOGIN = false 
 
@@ -85,6 +86,15 @@ export const useAuthStore = defineStore("auth", {
       try {
         const res = await authApi.getUser()
         this.user = res.data
+
+        if (this.user?.username) {
+          try {
+            const detailRes = await accountsApi.getUserDetail(this.user.username)
+            this.user = { ...this.user, ...detailRes.data }
+          } catch (detailErr) {
+            console.error("유저 상세 정보 조회 실패:", detailErr)
+          }
+        }
       } catch (e) {
         console.error("유저 정보 조회 실패:", e)
       }
