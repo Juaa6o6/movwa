@@ -61,7 +61,7 @@ const goToDetail = (id) => {
 .movie-card {
   transition: transform 0.2s ease-in-out;
   position: relative;
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
   width: 100%;
   aspect-ratio: 2 / 3;
