@@ -10,6 +10,7 @@ import LibraryView from '@/views/library/LibraryView.vue';
 import LibraryRatedGroupView from '@/views/library/LibraryRatedGroupView.vue';
 import MoviesView from '@/views/movies/MoviesView.vue';
 import MoviesGenreView from '@/views/movies/MoviesGenreView.vue';
+import SearchView from '@/views/search/SearchView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -72,6 +73,12 @@ const router = createRouter({
       component: MoviesGenreView,
       meta: { layout: 'default', requiresAuth: true },
       props: true,
+    },
+    {
+      path: '/search',
+      name: 'search',
+      component: SearchView,
+      meta: { layout: 'default', requiresAuth: true },
     },
   ],
 })
