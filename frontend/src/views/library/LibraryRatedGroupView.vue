@@ -118,7 +118,7 @@ const goToDetail = (id) => {
   grid-template-columns: repeat(auto-fit, var(--rated-card-width));
   column-gap: 10px;
   row-gap: 16px;
-  justify-content: center;
+  justify-content: start;
 }
 
 .rated-card {
