@@ -38,6 +38,7 @@
       hide-details
       style="max-width: 320px;"
       class="mr-4"
+      @keyup.enter="handleSearch"
     ></v-text-field>
 
     <v-menu min-width="200px" rounded>
@@ -63,7 +64,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router'; // 1. useRoute 추가!
 import { useAuthStore } from '@/stores/authStore';
 
@@ -82,6 +83,22 @@ const handleLogout = () => {
   authStore.logout();
   router.push('/login');
 };
+
+const handleSearch = () => {
+  const query = searchQuery.value.trim();
+  if (!query) return;
+  router.push({ path: '/search', query: { q: query } });
+};
+
+watch(
+  () => route.query.q,
+  (value) => {
+    if (route.path.startsWith('/search')) {
+      searchQuery.value = typeof value === 'string' ? value : '';
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped>
