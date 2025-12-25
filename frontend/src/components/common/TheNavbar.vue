@@ -41,21 +41,22 @@
       @keyup.enter="handleSearch"
     ></v-text-field>
 
-    <v-menu min-width="200px" rounded>
+    <v-menu min-width="200px" rounded offset="12">
       <template v-slot:activator="{ props }">
         <v-btn icon v-bind="props">
           <v-avatar color="grey-lighten-4" size="40">
-            <v-icon icon="mdi-account" color="grey-darken-1"></v-icon>
+            <img v-if="profileImageUrl" :src="profileImageUrl" alt="profile" />
+            <v-icon v-else icon="mdi-account" color="grey-darken-1"></v-icon>
           </v-avatar>
         </v-btn>
       </template>
       <v-card>
         <v-card-text>
-          <div class="mx-auto text-center">
-            <h3>{{ authStore.user?.username || '프로필' }}</h3>
-            <p class="text-caption mt-1">{{ authStore.user?.email }}</p>
+          <div class="profile-menu">
+            <p class="text-caption mt-1 mb-1">@{{ authStore.user?.username || 'username' }}</p>
+            <v-btn rounded variant="text" block class="menu-btn" @click="goToProfile">내 프로필</v-btn>
             <v-divider class="my-3"></v-divider>
-            <v-btn rounded variant="text" block @click="handleLogout">로그아웃</v-btn>
+            <v-btn rounded variant="text" block class="menu-btn" @click="handleLogout">로그아웃</v-btn>
           </div>
         </v-card-text>
       </v-card>
@@ -64,7 +65,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router'; // 1. useRoute 추가!
 import { useAuthStore } from '@/stores/authStore';
 
@@ -72,6 +73,7 @@ const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute(); // 2. 현재 주소 정보를 담은 변수
 const searchQuery = ref('');
+const profileImageUrl = computed(() => authStore.user?.profile_image_url || null);
 
 // 3. 현재 주소가 path와 일치하는지 확인하는 함수
 // 예: 현재 주소가 /movies라면 isActive('/movies')는 true가 됨
@@ -84,11 +86,21 @@ const handleLogout = () => {
   router.push('/login');
 };
 
+const goToProfile = () => {
+  router.push('/profile');
+};
+
 const handleSearch = () => {
   const query = searchQuery.value.trim();
   if (!query) return;
   router.push({ path: '/search', query: { q: query } });
 };
+
+onMounted(() => {
+  if (!authStore.user) {
+    authStore.fetchUser();
+  }
+});
 
 watch(
   () => route.query.q,
@@ -111,4 +123,20 @@ a { text-decoration: none; }
 :deep(.nav-btn .v-btn__overlay) { opacity: 0 !important; }
 :deep(.nav-btn .v-btn__underlay) { opacity: 0 !important; }
 :deep(.nav-btn .v-ripple__container) { opacity: 0 !important; }
+
+.profile-menu {
+  text-align: left;
+  padding-top: 2px;
+}
+
+.menu-btn {
+  margin-top: 0;
+  min-height: 32px;
+}
+
+:deep(.v-avatar img) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 </style>
