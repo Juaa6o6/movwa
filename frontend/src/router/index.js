@@ -8,6 +8,8 @@ import HomeView from '@/views/home/HomeView.vue';
 import MovieDetailView from '@/views/movie_detail/MovieDetailView.vue';
 import LibraryView from '@/views/library/LibraryView.vue';
 import LibraryRatedGroupView from '@/views/library/LibraryRatedGroupView.vue';
+import MoviesView from '@/views/movies/MoviesView.vue';
+import MoviesGenreView from '@/views/movies/MoviesGenreView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -55,6 +57,19 @@ const router = createRouter({
       path: '/library/ratings/:score',
       name: 'libraryRatedGroup',
       component: LibraryRatedGroupView,
+      meta: { layout: 'default', requiresAuth: true },
+      props: true,
+    },
+    {
+      path: '/movies',
+      name: 'movies',
+      component: MoviesView,
+      meta: { layout: 'default', requiresAuth: true },
+    },
+    {
+      path: '/movies/genre/:genre',
+      name: 'moviesGenre',
+      component: MoviesGenreView,
       meta: { layout: 'default', requiresAuth: true },
       props: true,
     },
