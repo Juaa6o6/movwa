@@ -1,6 +1,5 @@
 import { defineStore } from "pinia"
 import authApi from "@/api/authApi"
-import router from "@/router"
 
 const USE_MOCK_LOGIN = false 
 
@@ -53,11 +52,13 @@ export const useAuthStore = defineStore("auth", {
             console.warn("현재 응답된 키 목록:", Object.keys(res.data))
         }
 
-        localStorage.setItem("accessToken", access)
-        localStorage.setItem("refreshToken", refresh)
+        if (access) localStorage.setItem("accessToken", access)
         
-        // user 정보가 없으면 임시로 이메일이라도 채워넣기
-        this.user = user || { email: payload.email, username: '관리자' }
+        if (user) {
+          this.user = user
+        } else {
+          await this.fetchUser()
+        }
 
         return { ok: true }
 
@@ -80,10 +81,24 @@ export const useAuthStore = defineStore("auth", {
         this.loading = false
       }
     },
-    logout() {
-      localStorage.removeItem("accessToken")
-      localStorage.removeItem("refreshToken")
-      this.user = null
+    async fetchUser() {
+      try {
+        const res = await authApi.getUser()
+        this.user = res.data
+      } catch (e) {
+        console.error("유저 정보 조회 실패:", e)
+      }
+    },
+
+    async logout() {
+      try {
+        await authApi.logout()
+      } catch (e) {
+        console.error("로그아웃 실패:", e)
+      } finally {
+        localStorage.removeItem("accessToken")
+        this.user = null
+      }
     },
 
     // ... (login, logout은 기존 코드 유지)
