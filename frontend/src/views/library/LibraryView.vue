@@ -210,13 +210,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted, nextTick, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useLibraryStore } from '@/stores/libraryStore';
 
 const libraryStore = useLibraryStore();
 const currentTab = ref('all');
 const router = useRouter();
+const route = useRoute();
 const savedScrollRef = ref(null);
 const ratedScrollRefs = new Map();
 
@@ -240,14 +241,36 @@ const scrollToSection = (id) => {
 const selectTab = (tabName, sectionId) => {
   currentTab.value = tabName;
   if (sectionId) {
-    scrollToSection(sectionId);
+    nextTick(() => {
+      scrollToSection(sectionId);
+    });
   }
 };
 
 onMounted(() => {
   libraryStore.fetchSavedMovies();
   libraryStore.fetchRatedMovies();
+
+  const initialTab = route.query.tab;
+  if (initialTab === 'saved') {
+    selectTab('saved', 'saved-section');
+  } else if (initialTab === 'rated') {
+    selectTab('rated', 'rated-section');
+  }
 });
+
+watch(
+  () => route.query.tab,
+  (tab) => {
+    if (tab === 'saved') {
+      selectTab('saved', 'saved-section');
+    } else if (tab === 'rated') {
+      selectTab('rated', 'rated-section');
+    } else {
+      selectTab('all');
+    }
+  }
+);
 
 const setRatedRef = (score, el) => {
   if (!el) {
