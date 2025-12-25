@@ -16,6 +16,7 @@ from .serializers import (
     MovieListSerializer, MovieDetailSerializer,
     MovieLikeSerializer, MovieSaveSerializer, MovieRateSerializer,
     UserMovieLogBriefSerializer,
+    UserMovieLogCalendarSerializer,
     BoxOfficeRankSerializer,
     YouTubeVideoSerializer,
 )
@@ -240,6 +241,24 @@ class MyRatedListView(APIView):
         movies = [log.movie for log in logs]
         
         serializer = MovieListSerializer(movies, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class MyRatedLogListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        tags=['movies'],
+        summary="내가 평가한 영화 로그 목록 조회",
+        description="평점을 남긴 영화 로그를 최신순으로 조회합니다. (영화 정보 + updated_at 포함)",
+        responses=UserMovieLogCalendarSerializer(many=True)
+    )
+    def get(self, request):
+        logs = UserMovieLog.objects.filter(
+            user=request.user,
+            rating__isnull=False
+        ).select_related('movie').prefetch_related('movie__genres').order_by('-updated_at')
+
+        serializer = UserMovieLogCalendarSerializer(logs, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

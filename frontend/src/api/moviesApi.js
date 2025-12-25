@@ -78,4 +78,9 @@ export default {
   searchMovies(query, sort = 'popularity', page = 1) {
     return http.get(`/api/v1/movies/search/`, { params: { q: query, sort, page } });
   },
+
+  // 내가 평가한 영화 로그 (GET /movies/my/rated/logs/)
+  getRatedMovieLogs() {
+    return http.get(`/api/v1/movies/my/rated/logs/`);
+  },
 };
