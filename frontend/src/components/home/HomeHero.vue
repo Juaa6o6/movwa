@@ -18,10 +18,22 @@
 
     <div class="content pa-6 pa-md-10 d-flex flex-column justify-space-between">
       
-      <div class="top-area d-flex justify-end" @click.stop>
-        <div class="top-actions d-flex gap-3">
-          <v-btn
-            rounded="pill"
+    <div class="top-area d-flex justify-space-between" @click.stop>
+      <div class="top-left">
+        <v-btn
+          rounded="pill"
+          variant="outlined"
+          color="white"
+          class="action-btn"
+          @click.stop="$emit('refresh-reco')"
+        >
+          RECO
+        </v-btn>
+      </div>
+
+      <div class="top-actions d-flex gap-3">
+        <v-btn
+          rounded="pill"
             :variant="isMuted ? 'outlined' : 'flat'"
             :color="isMuted ? 'white' : 'grey-lighten-2'"
             class="hero-btn font-weight-bold"
@@ -92,7 +104,7 @@ const props = defineProps({
   isMuted: { type: Boolean, default: true },
 });
 
-defineEmits(["prev", "next", "save", "toggle-mute", "click-hero"]);
+defineEmits(["prev", "next", "save", "toggle-mute", "click-hero", "refresh-reco"]);
 
 // 배경 이미지
 const bgStyle = computed(() => {
@@ -214,6 +226,15 @@ const formattedRuntime = computed(() => {
     height: 48px;
     padding: 0 24px;
     font-size: 1rem;
+}
+
+.action-btn {
+  border-width: 2px !important;
+  height: 48px;
+  font-weight: 800;
+  padding: 0 28px;
+  font-size: 1rem;
+  backdrop-filter: blur(4px);
 }
 
 .glass-btn { backdrop-filter: blur(10px); background-color: rgba(255,255,255,0.1) !important; border: 1px solid rgba(255,255,255,0.2); }

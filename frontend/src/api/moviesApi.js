@@ -19,8 +19,8 @@ export default {
   // -----------------------
 
   // 추천 10개 (GET /movies/?page_size=10&sort=popularity)
-  getRecommendations(limit = 10, genreIds = []) {
-    const params = { page_size: limit, sort: 'popularity', exclude_future: 1 };
+  getRecommendations(limit = 10, genreIds = [], page = 1) {
+    const params = { page_size: limit, sort: 'popularity', exclude_future: 1, page };
     if (Array.isArray(genreIds) && genreIds.length) {
       params.genres = genreIds.join(',');
     }
