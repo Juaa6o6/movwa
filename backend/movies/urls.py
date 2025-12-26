@@ -22,6 +22,7 @@ from .views import (
     UpcomingMoviesView,
     TopRatedMoviesView,
     MovieRecommendationBatchView,
+    MovieFeedbackView,
     
     # YouTube 관련 영상
     MovieRelatedVideosView,
@@ -38,6 +39,7 @@ urlpatterns = [
     path('upcoming/', UpcomingMoviesView.as_view(), name='upcoming'),
     path('top-rated/', TopRatedMoviesView.as_view(), name='top-rated'),
     path('recommendations/batch/', MovieRecommendationBatchView.as_view(), name='movie-recommendations-batch'),
+    path('<uuid:pk>/feedback/', MovieFeedbackView.as_view(), name='movie-feedback'),
     path('<uuid:pk>/', MovieDetailView.as_view(), name='movie-detail'),
 
 
