@@ -20,7 +20,9 @@ from .serializers import (
     UserMovieLogCalendarSerializer,
     BoxOfficeRankSerializer,
     YouTubeVideoSerializer,
+    MovieFeedbackSerializer,
 )
+from .ai_recommender import MovieRecommender
 
 # 페이지네이션 설정 (기본 10개씩)
 class MoviePagination(PageNumberPagination):
@@ -356,6 +358,46 @@ class UserMovieLogBulkView(APIView):
 
 
 # 영화 검색
+
+
+class MovieFeedbackView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        tags=['movies'],
+        summary="?? 3-way ???",
+        description="like/pass/rate ? ??? ??? ?????.",
+        request=MovieFeedbackSerializer,
+    )
+    def post(self, request, pk):
+        movie = get_object_or_404(Movie, pk=pk)
+        serializer = MovieFeedbackSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        action = serializer.validated_data['action']
+        rating = serializer.validated_data.get('rating')
+
+        log, _ = UserMovieLog.objects.get_or_create(user=request.user, movie=movie)
+        if action == 'like':
+            log.is_liked = True
+            log.rating = None
+        elif action == 'pass':
+            log.is_liked = False
+            log.rating = None
+        elif action == 'rate':
+            log.is_liked = None
+            log.rating = rating
+
+        log.save(update_fields=['is_liked', 'rating', 'updated_at'])
+
+        return Response(
+            {
+                "message": f"{action} recorded",
+                "movie_id": str(movie.id),
+                "movie_title": movie.title,
+            },
+            status=status.HTTP_200_OK,
+        )
 class MovieSearchView(APIView):
     permission_classes = [AllowAny]
     
@@ -440,13 +482,13 @@ class MovieRecommendationBatchView(APIView):
 
     @extend_schema(
         tags=['movies'],
-        summary="추천 배치 조회",
-        description="무작위 10개 추천 배치를 반환합니다. 이미 추천/상호작용한 영화는 제외됩니다.",
+        summary="?? ?? ??",
+        description="?? ?? ???? 10? ?? ??? ?????.",
         parameters=[
-            OpenApiParameter(name='limit', description='추천 개수 (기본 10)', required=False, type=int),
-            OpenApiParameter(name='exclude', description='제외할 영화 UUID 목록(콤마 구분)', required=False, type=str),
-            OpenApiParameter(name='exclude_future', description='개봉 예정 제외 (true/1)', required=False, type=str),
-            OpenApiParameter(name='language', description='언어 필터 (ko|en|all)', required=False, type=str),
+            OpenApiParameter(name='limit', description='?? ?? (?? 10)', required=False, type=int),
+            OpenApiParameter(name='exclude', description='??? ?? UUID ??(?? ??)', required=False, type=str),
+            OpenApiParameter(name='exclude_future', description='?? ?? ?? (true/1)', required=False, type=str),
+            OpenApiParameter(name='language', description='?? ?? (ko|en|all)', required=False, type=str),
         ],
         responses={200: MovieListSerializer(many=True)}
     )
@@ -472,28 +514,37 @@ class MovieRecommendationBatchView(APIView):
         session_exclude = request.session.get('recommended_movie_ids', [])
         exclude_ids.update([str(mid) for mid in session_exclude])
 
-        user_log_ids = UserMovieLog.objects.filter(
-            user=request.user
-        ).values_list('movie_id', flat=True)
-        exclude_ids.update([str(mid) for mid in user_log_ids])
-
-        movies = Movie.objects.all().prefetch_related('genres')
-        movies = apply_language_filter(movies, request)
+        recommender = MovieRecommender(request.user)
+        recommended = recommender.get_batch_recommendations(limit, exclude_ids)
 
         exclude_future = request.query_params.get('exclude_future', '1')
-        if exclude_future in ('1', 'true', 'True'):
-            today = date.today()
-            movies = movies.filter(release_date__lte=today)
+        language = request.query_params.get('language')
 
-        if exclude_ids:
-            movies = movies.exclude(id__in=exclude_ids)
+        filtered = recommended
+        if language or exclude_future in ('1', 'true', 'True'):
+            ids = [m.id for m in recommended]
+            qs = Movie.objects.filter(id__in=ids).prefetch_related('genres')
+            qs = apply_language_filter(qs, request)
+            if exclude_future in ('1', 'true', 'True'):
+                today = date.today()
+                qs = qs.filter(release_date__lte=today)
+            filtered = list(qs)
 
-        movies = movies.order_by('?')[:limit]
-        serializer = MovieListSerializer(movies, many=True)
+        result = filtered[:limit]
+        if len(result) < limit:
+            fill_exclude = exclude_ids.union([str(m.id) for m in result])
+            qs = Movie.objects.exclude(id__in=fill_exclude).prefetch_related('genres')
+            qs = apply_language_filter(qs, request)
+            if exclude_future in ('1', 'true', 'True'):
+                today = date.today()
+                qs = qs.filter(release_date__lte=today)
+            fillers = list(qs.order_by('?')[: limit - len(result)])
+            result.extend(fillers)
 
-        new_ids = [str(m.id) for m in movies]
+        new_ids = [str(m.id) for m in result]
         request.session['recommended_movie_ids'] = list(exclude_ids.union(new_ids))
 
+        serializer = MovieListSerializer(result, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

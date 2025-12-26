@@ -93,6 +93,24 @@ class UserMovieRecommend(models.Model):
 
 
 # [DB 명세] 박스오피스 순위 (KOBIS API 연동)
+
+
+class MovieEmbedding(models.Model):
+    movie = models.OneToOneField(
+        Movie,
+        on_delete=models.CASCADE,
+        related_name='embedding',
+        primary_key=True,
+    )
+    vector = models.JSONField()
+    model_version = models.CharField(max_length=50, default='text-embedding-3-small')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Embedding for {self.movie.title}"
+
+
 class BoxOfficeRank(models.Model):
     RANK_TYPE_CHOICES = [
         ('daily', '일간'),
