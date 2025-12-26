@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import axios from 'axios'
+import moviesApi from '@/api/moviesApi'
 
 export const useMovieStore = defineStore('movie', () => {
   const movie = ref(null)
@@ -8,6 +9,7 @@ export const useMovieStore = defineStore('movie', () => {
   const crewList = ref([]) // ✨ 추가: 제작진 데이터를 담을 변수
   const youtubeUrl = ref(null)
   const isLoading = ref(false)
+  const relatedVideos = ref([])
   
   // Django 서버 주소
   const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
@@ -51,9 +53,21 @@ export const useMovieStore = defineStore('movie', () => {
         youtubeUrl.value = null
       }
 
+      // 5. 리뷰 목록 조회
+      try {
+        const reviewRes = await moviesApi.getMovieReviews(id)
+        movie.value.reviews = Array.isArray(reviewRes.data) ? reviewRes.data : []
+      } catch (reviewError) {
+        console.error('리뷰 로딩 실패:', reviewError)
+        movie.value.reviews = []
+      }
+
+      relatedVideos.value = []
+
     } catch (error) {
       console.error('영화 정보 로딩 실패:', error)
       movie.value = null
+      relatedVideos.value = []
     } finally {
       isLoading.value = false
     }
@@ -64,6 +78,7 @@ export const useMovieStore = defineStore('movie', () => {
     castList,
     crewList, // ✨ 반환값에 추가 필수
     youtubeUrl, 
+    relatedVideos,
     isLoading, 
     fetchMovieDetail 
   }

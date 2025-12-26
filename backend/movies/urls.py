@@ -21,6 +21,7 @@ from .views import (
     BoxOfficeView,
     UpcomingMoviesView,
     TopRatedMoviesView,
+    MovieRecommendationBatchView,
     
     # YouTube 관련 영상
     MovieRelatedVideosView,
@@ -36,6 +37,7 @@ urlpatterns = [
     path('boxoffice/', BoxOfficeView.as_view(), name='boxoffice'),
     path('upcoming/', UpcomingMoviesView.as_view(), name='upcoming'),
     path('top-rated/', TopRatedMoviesView.as_view(), name='top-rated'),
+    path('recommendations/batch/', MovieRecommendationBatchView.as_view(), name='movie-recommendations-batch'),
     path('<uuid:pk>/', MovieDetailView.as_view(), name='movie-detail'),
 
 
