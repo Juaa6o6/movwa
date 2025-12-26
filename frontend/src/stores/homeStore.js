@@ -108,7 +108,7 @@ export const useHomeStore = defineStore('home', () => {
       if (hadRating) {
         await movieApi.deleteRate(currentMovie.value.id);
       }
-      await movieApi.passMovie(currentMovie.value.id);
+      await movieApi.sendFeedback(currentMovie.value.id, "pass");
       setTimeout(() => next(), 300);
     } catch (e) {
       console.error(e);
@@ -144,7 +144,7 @@ export const useHomeStore = defineStore('home', () => {
       if (!isAlready && prevStatus === 'saved') {
         await movieApi.saveMovie(currentMovie.value.id, false);
       }
-      await movieApi.likeMovie(currentMovie.value.id, isAlready ? null : true);
+      await movieApi.sendFeedback(currentMovie.value.id, isAlready ? "pass" : "like");
     } catch (e) {
       console.error(e);
       currentMovie.value.status = prevStatus;
@@ -169,7 +169,7 @@ export const useHomeStore = defineStore('home', () => {
     removeFromPicks(currentMovie.value.id);
 
     try {
-      await movieApi.rateMovie(currentMovie.value.id, rating);
+      await movieApi.sendFeedback(currentMovie.value.id, "rate", rating);
     } catch (e) {
       console.error(e);
       currentMovie.value.status = prevStatus;
