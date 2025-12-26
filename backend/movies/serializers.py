@@ -92,6 +92,16 @@ class MovieRateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("평점은 0.5 단위로 입력해야 합니다.")
         return value
 
+
+class MovieFeedbackSerializer(serializers.Serializer):
+    action = serializers.ChoiceField(choices=['like', 'pass', 'rate'])
+    rating = serializers.FloatField(required=False, min_value=0.5, max_value=5.0)
+
+    def validate(self, data):
+        if data['action'] == 'rate' and 'rating' not in data:
+            raise serializers.ValidationError("rating is required for rate action")
+        return data
+
 # 공통 Response용 (필요 시 전체 로그 반환)
 class UserMovieLogSerializer(serializers.ModelSerializer):
     class Meta:

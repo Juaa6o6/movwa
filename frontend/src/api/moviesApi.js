@@ -50,6 +50,15 @@ export default {
     return http.post(`/api/v1/movies/${movieId}/rate/`, { rating });
   },
 
+  // 3-way feedback (POST /movies/{id}/feedback/) body: { action, rating? }
+  sendFeedback(movieId, action, rating = null) {
+    const payload = { action };
+    if (action === 'rate' && rating != null) {
+      payload.rating = rating;
+    }
+    return http.post(`/api/v1/movies/${movieId}/feedback/`, payload);
+  },
+
   // RATE 삭제 (DELETE /movies/{id}/rate/)
   deleteRate(movieId) {
     return http.delete(`/api/v1/movies/${movieId}/rate/`);
