@@ -9,24 +9,15 @@ export const useHomeStore = defineStore('home', () => {
   const currentIndex = ref(0);
   const isLoading = ref(false);
   const isMuted = ref(true);
-  const recPage = ref(1);
-  const recMaxPage = ref(1);
   const recPageSize = 10;
 
   const currentMovie = computed(() => {
     return recList.value[currentIndex.value] || null;
   });
 
-  const fetchRecommendations = async (page = 1) => {
-    const res = await movieApi.getRecommendations(recPageSize, [], page);
+  const fetchRecommendations = async (excludeIds = []) => {
+    const res = await movieApi.getRecommendationBatch(recPageSize, excludeIds);
     recList.value = Array.isArray(res.data) ? res.data : (res.data.results || []);
-    recPage.value = page;
-    const totalCount = res.data?.count;
-    if (typeof totalCount === 'number' && totalCount > 0) {
-      recMaxPage.value = Math.max(1, Math.ceil(totalCount / recPageSize));
-    } else {
-      recMaxPage.value = 1;
-    }
     // ?????? status??null
     recList.value = recList.value.map(m => ({ ...m, status: null, rating: null }));
     const movieIds = recList.value.map((m) => m.id).filter(Boolean);
@@ -80,13 +71,8 @@ export const useHomeStore = defineStore('home', () => {
 
   const refreshRecommendations = async () => {
     try {
-      let nextPage = recPage.value || 1;
-      if (recMaxPage.value > 1) {
-        do {
-          nextPage = Math.floor(Math.random() * recMaxPage.value) + 1;
-        } while (nextPage === recPage.value);
-      }
-      await fetchRecommendations(nextPage);
+      const excludeIds = recList.value.map((movie) => movie.id).filter(Boolean);
+      await fetchRecommendations(excludeIds);
     } catch (e) {
       console.error(e);
     }

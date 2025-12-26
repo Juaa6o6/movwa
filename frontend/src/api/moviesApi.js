@@ -27,6 +27,14 @@ export default {
     return http.get(`/api/v1/movies/`, { params });
   },
 
+  getRecommendationBatch(limit = 10, excludeIds = []) {
+    const params = { limit };
+    if (Array.isArray(excludeIds) && excludeIds.length) {
+      params.exclude = excludeIds.join(',');
+    }
+    return http.get(`/api/v1/movies/recommendations/batch/`, { params });
+  },
+
   // PASS (POST /movies/{id}/like/) body: { is_liked: false }
   passMovie(movieId) {
     return http.post(`/api/v1/movies/${movieId}/like/`, { is_liked: false });
