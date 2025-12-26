@@ -2,7 +2,7 @@
   <v-dialog v-model="internalShow" max-width="500px">
     <v-card class="pa-4 rounded-xl">
       <v-card-title class="d-flex justify-space-between align-center">
-        <span class="text-h6 font-weight-bold">감상평 작성하기</span>
+        <span class="text-h6 font-weight-bold">{{ dialogTitle }}</span>
         <v-btn icon="mdi-close" variant="text" @click="close"></v-btn>
       </v-card-title>
 
@@ -38,7 +38,7 @@
           class="font-weight-bold text-white"
           @click="submitReview"
         >
-          등록하기
+          {{ submitLabel }}
         </v-btn>
       </v-card-text>
     </v-card>
@@ -46,20 +46,39 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 
 const props = defineProps({
-  show: Boolean
+  show: Boolean,
+  initialRating: {
+    type: Number,
+    default: 5.0
+  },
+  initialContent: {
+    type: String,
+    default: ''
+  },
+  isEdit: {
+    type: Boolean,
+    default: false
+  }
 });
 const emit = defineEmits(['update:show', 'submit']);
 
 const internalShow = ref(props.show);
-const rating = ref(5.0);
-const reviewContent = ref('');
+const rating = ref(props.initialRating);
+const reviewContent = ref(props.initialContent);
+
+const dialogTitle = computed(() => (props.isEdit ? '감상평 수정하기' : '감상평 작성하기'));
+const submitLabel = computed(() => (props.isEdit ? '수정하기' : '등록하기'));
 
 // 부모의 show 상태 감시
 watch(() => props.show, (newVal) => {
   internalShow.value = newVal;
+  if (newVal) {
+    rating.value = props.initialRating;
+    reviewContent.value = props.initialContent;
+  }
 });
 
 // 내부 팝업 상태 변화를 부모에게 전달
@@ -83,8 +102,8 @@ const submitReview = () => {
   });
   
   // 초기화 후 닫기
-  reviewContent.value = '';
-  rating.value = 5.0;
+  reviewContent.value = props.initialContent;
+  rating.value = props.initialRating;
   close();
 };
 </script>

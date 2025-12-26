@@ -47,7 +47,7 @@
                 height="44"
                 @click="toggleSave"
               >
-                {{ isSaved ? '보관됨' : '보관하기' }}
+                {{ isSaved ? 'SAVED' : 'SAVE' }}
               </v-btn>
             </div>
           </div>
@@ -74,32 +74,13 @@
           />
         </v-container>
 <!-- //나중에 관련영상 수정하기*/ -->
-        <v-container class="pa-6" v-if="relatedVideos.length > 0">
-          <h3 class="text-h5 font-weight-bold mb-4">관련 영상</h3>
-          <v-row>
-            <v-col cols="12" sm="6" md="3" v-for="video in relatedVideos" :key="video.id">
-              <v-card @click="playRelatedVideo(video.key)" class="cursor-pointer" hover rounded="lg" elevation="2">
-                <v-img 
-                  :src="`https://img.youtube.com/vi/${video.key}/mqdefault.jpg`" 
-                  aspect-ratio="16/9" 
-                  cover
-                >
-                  <div class="d-flex fill-height align-center justify-center">
-                    <v-icon icon="mdi-play-circle" size="48" color="rgba(255,255,255,0.8)"></v-icon>
-                  </div>
-                </v-img>
-                <v-card-text class="pa-2 text-caption text-truncate font-weight-medium">
-                  {{ video.name }}
-                </v-card-text>
-              </v-card>
-            </v-col>
-          </v-row>
-        </v-container>
+        
         </v-col>
 
       <v-col cols="12" md="4" class="fill-height bg-grey-lighten-5" style="border-left: 1px solid #e0e0e0; height: calc(100vh - 80px);">
         <MovieRightPanel 
-          :movie="movieStore.movie" 
+          :movie="movieStore.movie"
+          :review-action-label="reviewActionLabel"
           @open-review-dialog="showReviewDialog = true"
         />
       </v-col>
@@ -108,6 +89,9 @@
 
     <MovieReviewDialog 
       v-model:show="showReviewDialog"
+      :initial-rating="userReview?.rating ?? 5.0"
+      :initial-content="userReview?.content ?? ''"
+      :is-edit="Boolean(userReview)"
       @submit="handleReviewSubmit"
     />
   </v-container>
@@ -117,6 +101,9 @@
 import { ref, onMounted, watch, computed } from 'vue'; // ✅ computed 추가 완료
 import { useRoute } from 'vue-router';
 import { useMovieStore } from '@/stores/movieStore';
+import moviesApi from '@/api/moviesApi';
+import reviewsApi from '@/api/reviewsApi';
+import { useAuthStore } from '@/stores/authStore';
 
 import MovieHeroSection from '@/components/movie/MovieHeroSection.vue';
 import MovieMainContent from '@/components/movie/MovieMainContent.vue';
@@ -125,17 +112,45 @@ import MovieReviewDialog from '@/components/movie/MovieReviewDialog.vue'; // ✨
 
 const route = useRoute();
 const movieStore = useMovieStore();
+const authStore = useAuthStore();
 
 // ✨ 추가된 상태 변수들
 const isLiked = ref(false);
 const isSaved = ref(false);
 const showReviewDialog = ref(false); // ✨ 팝업 상태 추가
 
+const currentUserId = computed(() => authStore.user?.id ?? authStore.user?.pk ?? null);
+const userReview = computed(() => {
+  if (!movieStore.movie?.reviews?.length || !currentUserId.value) return null;
+  return movieStore.movie.reviews.find((review) => review.user?.id === currentUserId.value) || null;
+});
+const reviewActionLabel = computed(() => (userReview.value ? '리뷰 수정하기' : '리뷰 남기기'));
+
 // [리뷰 등록 처리 함수 추가]
-const handleReviewSubmit = (reviewData) => {
-  console.log('등록할 리뷰:', reviewData);
-  // 여기에 Django 백엔드 API 서버로 POST 요청을 보내는 코드가 들어갑니다.
-  alert('리뷰가 등록되었습니다!');
+const handleReviewSubmit = async (reviewData) => {
+  try {
+    if (userReview.value?.id) {
+      await reviewsApi.updateReview(userReview.value.id, {
+        rating: reviewData.rating,
+        content: reviewData.content,
+        is_spoiler: false
+      });
+    } else {
+      await reviewsApi.createReview({
+        movie_id: route.params.id,
+        rating: reviewData.rating,
+        content: reviewData.content,
+        is_spoiler: false
+      });
+    }
+    const reviewRes = await moviesApi.getMovieReviews(route.params.id);
+    if (movieStore.movie) {
+      movieStore.movie.reviews = Array.isArray(reviewRes.data) ? reviewRes.data : [];
+    }
+  } catch (err) {
+    console.error('리뷰 저장 실패:', err);
+    alert('리뷰 저장에 실패했습니다. 다시 시도해주세요.');
+  }
 };
 
 // ✨ 유튜브 URL 자동재생 처리 (computed로 해결)
@@ -150,26 +165,31 @@ const finalYoutubeUrl = computed(() => {
   return `${url}${separator}autoplay=1&mute=1&controls=1&modestbranding=1&rel=0`;
 });
 
-// ✨ 관련 영상 4개 가져오기
-const relatedVideos = computed(() => {
-  if (!movieStore.movie?.videos?.results) return [];
-  // YouTube 영상만 필터링 -> 상위 4개 자르기
-  return movieStore.movie.videos.results
-    .filter(v => v.site === 'YouTube')
-    .slice(0, 4);
-});
-
-const loadData = (id) => {
+const loadData = async (id) => {
   if (id) {
-    movieStore.fetchMovieDetail(id);
-    isLiked.value = false; 
-    isSaved.value = false;
+    await movieStore.fetchMovieDetail(id);
+    await syncUserLog(id);
   }
 };
 
 // ✨ 버튼 기능 함수들
-const toggleLike = () => { isLiked.value = !isLiked.value; };
-const toggleSave = () => { isSaved.value = !isSaved.value;};
+const toggleLike = async () => {
+  try {
+    const res = await moviesApi.likeMovie(route.params.id, !isLiked.value);
+    isLiked.value = res.data?.is_liked ?? !isLiked.value;
+  } catch (err) {
+    console.error('좋아요 처리 실패:', err);
+  }
+};
+
+const toggleSave = async () => {
+  try {
+    const res = await moviesApi.saveMovie(route.params.id, !isSaved.value);
+    isSaved.value = res.data?.is_saved ?? !isSaved.value;
+  } catch (err) {
+    console.error('보관하기 처리 실패:', err);
+  }
+};
 
 const shareMovie = async () => {
   try {
@@ -180,11 +200,17 @@ const shareMovie = async () => {
   }
 };
 
-/// 관련 영상 클릭 시 재생
-const playRelatedVideo = (videoKey) => {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-  // store의 url을 업데이트하면 finalYoutubeUrl도 자동으로 반응합니다.
-  movieStore.youtubeUrl = `https://www.youtube.com/embed/${videoKey}`;
+const syncUserLog = async (id) => {
+  try {
+    const res = await moviesApi.getUserMovieLogs([id]);
+    const log = Array.isArray(res.data) ? res.data[0] : null;
+    isLiked.value = log?.is_liked ?? false;
+    isSaved.value = log?.is_saved ?? false;
+  } catch (err) {
+    console.error('유저 로그 조회 실패:', err);
+    isLiked.value = false;
+    isSaved.value = false;
+  }
 };
 
 onMounted(() => loadData(route.params.id));

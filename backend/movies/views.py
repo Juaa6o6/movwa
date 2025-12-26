@@ -1,5 +1,6 @@
 from django.utils import timezone
 from datetime import timedelta, date
+import uuid
 from django.db.models import Q, Case, When, IntegerField, Max
 
 from rest_framework.views import APIView
@@ -57,6 +58,9 @@ class MovieListView(APIView):
         parameters=[
             OpenApiParameter(name='page', description='페이지 번호', required=False, type=int),
             OpenApiParameter(name='language', description='언어 필터 (ko: 한글[기본값], all: 전체, en: 영어)', required=False, type=str),
+            OpenApiParameter(name='genres', description='장르 ID 목록 (예: 1,2,3)', required=False, type=str),
+            OpenApiParameter(name='sort', description='정렬 기준 (release_date|popularity)', required=False, type=str),
+            OpenApiParameter(name='exclude_future', description='개봉 예정 제외 (true/1)', required=False, type=str),
         ],
         responses={200: MovieListSerializer(many=True)}
     )
@@ -67,9 +71,29 @@ class MovieListView(APIView):
         # 2. 언어 필터링 적용
         movies = apply_language_filter(movies, request)
         
-        # 3. 정렬
-        movies = movies.order_by('-release_date')
-        
+        # 3. 장르 필터링 적용 (선택)
+        genre_param = request.query_params.get('genres')
+        if genre_param:
+            try:
+                genre_ids = [int(gid) for gid in genre_param.split(',') if gid.strip().isdigit()]
+                if genre_ids:
+                    movies = movies.filter(genres__id__in=genre_ids).distinct()
+            except ValueError:
+                pass
+
+        # 4. 개봉 예정 제외 (선택)
+        exclude_future = request.query_params.get('exclude_future')
+        if exclude_future in ('1', 'true', 'True'):
+            today = date.today()
+            movies = movies.filter(release_date__lte=today)
+
+        # 4. 정렬
+        sort = request.query_params.get('sort', 'release_date')
+        if sort == 'popularity':
+            movies = movies.order_by('-popularity', '-release_date')
+        else:
+            movies = movies.order_by('-release_date')
+
         # 4. 페이지네이션 처리
         
         # 4. 페이지네이션 처리
@@ -409,6 +433,68 @@ class MovieSearchView(APIView):
         
         # 6. 응답 반환
         return paginator.get_paginated_response(serializer.data)
+
+
+class MovieRecommendationBatchView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        tags=['movies'],
+        summary="추천 배치 조회",
+        description="무작위 10개 추천 배치를 반환합니다. 이미 추천/상호작용한 영화는 제외됩니다.",
+        parameters=[
+            OpenApiParameter(name='limit', description='추천 개수 (기본 10)', required=False, type=int),
+            OpenApiParameter(name='exclude', description='제외할 영화 UUID 목록(콤마 구분)', required=False, type=str),
+            OpenApiParameter(name='exclude_future', description='개봉 예정 제외 (true/1)', required=False, type=str),
+            OpenApiParameter(name='language', description='언어 필터 (ko|en|all)', required=False, type=str),
+        ],
+        responses={200: MovieListSerializer(many=True)}
+    )
+    def get(self, request):
+        try:
+            limit = int(request.query_params.get('limit', 10))
+        except (TypeError, ValueError):
+            limit = 10
+        limit = max(1, min(limit, 50))
+
+        exclude_ids = set()
+        raw_exclude = request.query_params.get('exclude', '')
+        if raw_exclude:
+            for raw_id in raw_exclude.split(','):
+                raw_id = raw_id.strip()
+                if not raw_id:
+                    continue
+                try:
+                    exclude_ids.add(str(uuid.UUID(raw_id)))
+                except ValueError:
+                    continue
+
+        session_exclude = request.session.get('recommended_movie_ids', [])
+        exclude_ids.update([str(mid) for mid in session_exclude])
+
+        user_log_ids = UserMovieLog.objects.filter(
+            user=request.user
+        ).values_list('movie_id', flat=True)
+        exclude_ids.update([str(mid) for mid in user_log_ids])
+
+        movies = Movie.objects.all().prefetch_related('genres')
+        movies = apply_language_filter(movies, request)
+
+        exclude_future = request.query_params.get('exclude_future', '1')
+        if exclude_future in ('1', 'true', 'True'):
+            today = date.today()
+            movies = movies.filter(release_date__lte=today)
+
+        if exclude_ids:
+            movies = movies.exclude(id__in=exclude_ids)
+
+        movies = movies.order_by('?')[:limit]
+        serializer = MovieListSerializer(movies, many=True)
+
+        new_ids = [str(m.id) for m in movies]
+        request.session['recommended_movie_ids'] = list(exclude_ids.union(new_ids))
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # 박스오피스 순위 조회
