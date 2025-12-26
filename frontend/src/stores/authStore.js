@@ -71,6 +71,7 @@ export const useAuthStore = defineStore("auth", {
         if (e.response) {
             console.log("응답 상태 코드:", e.response.status)
             console.log("응답 데이터:", e.response.data)
+            console.log("non_field_errors:", e.response.data?.non_field_errors)
         }
 
         const msg = e?.response?.data?.detail || 

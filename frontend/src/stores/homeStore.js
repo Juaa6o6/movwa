@@ -9,55 +9,86 @@ export const useHomeStore = defineStore('home', () => {
   const currentIndex = ref(0);
   const isLoading = ref(false);
   const isMuted = ref(true);
+  const recPage = ref(1);
+  const recMaxPage = ref(1);
+  const recPageSize = 10;
 
   const currentMovie = computed(() => {
     return recList.value[currentIndex.value] || null;
   });
 
+  const fetchRecommendations = async (page = 1) => {
+    const res = await movieApi.getRecommendations(recPageSize, [], page);
+    recList.value = Array.isArray(res.data) ? res.data : (res.data.results || []);
+    recPage.value = page;
+    const totalCount = res.data?.count;
+    if (typeof totalCount === 'number' && totalCount > 0) {
+      recMaxPage.value = Math.max(1, Math.ceil(totalCount / recPageSize));
+    } else {
+      recMaxPage.value = 1;
+    }
+    // ?????? status??null
+    recList.value = recList.value.map(m => ({ ...m, status: null, rating: null }));
+    const movieIds = recList.value.map((m) => m.id).filter(Boolean);
+    if (movieIds.length) {
+      const logsRes = await movieApi.getUserMovieLogs(movieIds);
+      const logs = Array.isArray(logsRes.data) ? logsRes.data : [];
+      const logMap = new Map(logs.map((log) => [log.movie_id, log]));
+      recList.value = recList.value.map((movie) => {
+        const log = logMap.get(movie.id);
+        if (!log) return movie;
+
+        let status = null;
+        if (log.rating !== null && log.rating !== undefined) {
+          status = "rated";
+        } else if (log.is_saved) {
+          status = "saved";
+        } else if (log.is_liked === true) {
+          status = "liked";
+        } else if (log.is_liked === false) {
+          status = "passed";
+        }
+
+        return {
+          ...movie,
+          status,
+          rating: log.rating ?? null,
+        };
+      });
+    }
+    currentIndex.value = 0;
+  };
+
+  const fetchTodayPicks = async () => {
+    const picksRes = await movieApi.getTodayPicks();
+    todaysPicks.value = Array.isArray(picksRes.data)
+      ? picksRes.data
+      : (picksRes.data.results || []);
+  };
+
   const initHome = async () => {
     isLoading.value = true;
     try {
-      const res = await movieApi.getRecommendations(10);
-      recList.value = Array.isArray(res.data) ? res.data : (res.data.results || []);
-      // 초기 status는 null
-      recList.value = recList.value.map(m => ({ ...m, status: null, rating: null }));
-      const movieIds = recList.value.map((m) => m.id).filter(Boolean);
-      if (movieIds.length) {
-        const logsRes = await movieApi.getUserMovieLogs(movieIds);
-        const logs = Array.isArray(logsRes.data) ? logsRes.data : [];
-        const logMap = new Map(logs.map((log) => [log.movie_id, log]));
-        recList.value = recList.value.map((movie) => {
-          const log = logMap.get(movie.id);
-          if (!log) return movie;
-
-          let status = null;
-          if (log.rating !== null && log.rating !== undefined) {
-            status = "rated";
-          } else if (log.is_saved) {
-            status = "saved";
-          } else if (log.is_liked === true) {
-            status = "liked";
-          } else if (log.is_liked === false) {
-            status = "passed";
-          }
-
-          return {
-            ...movie,
-            status,
-            rating: log.rating ?? null,
-          };
-        });
-      }
-
-      const picksRes = await movieApi.getTodayPicks();
-      todaysPicks.value = Array.isArray(picksRes.data)
-        ? picksRes.data
-        : (picksRes.data.results || []);
-      currentIndex.value = 0;
+      await fetchRecommendations();
+      await fetchTodayPicks();
     } catch (e) {
       console.error(e);
     } finally {
       isLoading.value = false;
+    }
+  };
+
+  const refreshRecommendations = async () => {
+    try {
+      let nextPage = recPage.value || 1;
+      if (recMaxPage.value > 1) {
+        do {
+          nextPage = Math.floor(Math.random() * recMaxPage.value) + 1;
+        } while (nextPage === recPage.value);
+      }
+      await fetchRecommendations(nextPage);
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -227,7 +258,7 @@ export const useHomeStore = defineStore('home', () => {
 
   return {
     recList, todaysPicks, currentIndex, isLoading, currentMovie, isMuted,
-    initHome, selectIndex, next, prev,
+    initHome, refreshRecommendations, selectIndex, next, prev,
     passCurrentMovie, likeCurrentMovie, rateCurrentMovie, clearRateCurrentMovie,
     saveCurrentMovie, toggleMute
   };

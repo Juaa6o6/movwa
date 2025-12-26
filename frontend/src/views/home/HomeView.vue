@@ -14,6 +14,7 @@
         @save="home.saveCurrentMovie"
         @toggle-mute="home.toggleMute"
         @click-hero="goToDetail"
+        @refresh-reco="home.refreshRecommendations"
       >
         <MovieActions
           :status="home.currentMovie?.status"
