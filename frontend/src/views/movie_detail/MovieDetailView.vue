@@ -78,8 +78,9 @@
         </v-col>
 
       <v-col cols="12" md="4" class="fill-height bg-grey-lighten-5" style="border-left: 1px solid #e0e0e0; height: calc(100vh - 80px);">
-        <MovieRightPanel 
+        <MovieRightPanel
           :movie="movieStore.movie"
+          :related-videos="movieStore.relatedVideos"
           :review-action-label="reviewActionLabel"
           @open-review-dialog="showReviewDialog = true"
         />

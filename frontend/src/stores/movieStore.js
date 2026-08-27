@@ -62,7 +62,14 @@ export const useMovieStore = defineStore('movie', () => {
         movie.value.reviews = []
       }
 
-      relatedVideos.value = []
+      // 6. 유튜브 관련 영상 조회
+      try {
+        const videosRes = await moviesApi.getRelatedVideos(id)
+        relatedVideos.value = videosRes.data?.videos || []
+      } catch (videoError) {
+        console.error('유튜브 영상 로딩 실패:', videoError)
+        relatedVideos.value = []
+      }
 
     } catch (error) {
       console.error('영화 정보 로딩 실패:', error)
