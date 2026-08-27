@@ -94,6 +94,7 @@
               <v-card
                 :href="`https://www.youtube.com/watch?v=${video.video_id}`"
                 target="_blank"
+                rel="noopener noreferrer"
                 color="grey-lighten-4"
                 class="border"
                 hover
