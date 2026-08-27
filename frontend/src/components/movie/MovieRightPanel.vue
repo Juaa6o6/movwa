@@ -88,19 +88,44 @@
       </v-window-item>
 
       <v-window-item :value="2" class="pa-4">
-        <v-row dense>
-          <v-col cols="6" v-for="n in 6" :key="n">
-            <v-card 
-              height="200" 
-              color="grey-lighten-4" 
-              class="d-flex align-center justify-center position-relative border"
-              hover
-              flat
-            >
-              <span class="text-caption text-grey">이미지 없음</span>
-            </v-card>
-          </v-col>
-        </v-row>
+        <div v-if="relatedVideos?.length > 0">
+          <v-row dense>
+            <v-col cols="6" v-for="video in relatedVideos" :key="video.video_id">
+              <v-card
+                :href="`https://www.youtube.com/watch?v=${video.video_id}`"
+                target="_blank"
+                color="grey-lighten-4"
+                class="border"
+                hover
+                flat
+              >
+                <v-img
+                  :src="video.thumbnail"
+                  height="110"
+                  cover
+                >
+                  <template #error>
+                    <div class="d-flex align-center justify-center fill-height bg-grey-lighten-3">
+                      <v-icon color="grey">mdi-play-circle-outline</v-icon>
+                    </div>
+                  </template>
+                </v-img>
+                <v-card-text class="pa-2">
+                  <p class="text-caption text-black font-weight-medium" style="line-height:1.3; display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                    {{ video.title }}
+                  </p>
+                  <p class="text-caption text-grey mt-1" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">
+                    {{ video.channel_title }}
+                  </p>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </div>
+        <div v-else class="text-center py-10 text-grey">
+          <v-icon size="40" class="mb-2 text-grey-lighten-1">mdi-youtube</v-icon>
+          <p>관련 영상을 불러오는 중이거나<br>준비된 영상이 없습니다.</p>
+        </div>
       </v-window-item>
 
     </v-window>
@@ -117,6 +142,10 @@ defineEmits(['open-review-dialog']);
 
 defineProps({
   movie: Object,
+  relatedVideos: {
+    type: Array,
+    default: () => []
+  },
   reviewActionLabel: {
     type: String,
     default: '리뷰 남기기'
