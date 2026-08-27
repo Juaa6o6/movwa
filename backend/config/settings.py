@@ -37,10 +37,10 @@ OPENAI_BASE_URL = env('OPENAI_BASE_URL', default='')
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-7ks))u+d@^jh^_wyc2s)l7*_8r0=4u17nr0xp#0tqvxd&w6#m2'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool('DEBUG', default=False)
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
